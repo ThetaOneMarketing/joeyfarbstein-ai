@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "joeyfarbstein-ai",
+  "owner": { "name": "Joey Farbstein", "url": "https://github.com/ThetaOneMarketing" },
+  "description": "Install the Joey Farbstein AI audit and interview as a Claude plugin.",
+  "plugins": [
+    {
+      "name": "joeyfarbstein-ai",
+      "source": "./",
+      "description": "Where You Stand with AI: audit how you already use AI, then a short interview about the rest of your business.",
+      "license": "MIT",
+      "keywords": ["contractors", "ai audit", "local service business"]
+    }
+  ]
+}

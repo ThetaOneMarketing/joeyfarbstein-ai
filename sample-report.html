@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where You Stand with AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+if (window.tailwind) tailwind.config = { theme: { extend: {
+  fontFamily: { sans: ['Inter','system-ui','sans-serif'], display: ['"Inter Tight"','Inter','system-ui','sans-serif'] },
+  colors: { ink:'#1b2430', mute:'#6b7785', line:'#e3e7ec', paper:'#f3f4f6', card:'#ffffff', teal:{DEFAULT:'#0f766e', soft:'#e6f4f2'}, amber:{DEFAULT:'#f5b400', ink:'#3d2e00', soft:'#fff5d6'} }
+}}}
+</script>
+<style>
+/* Layout: one idea per screen. Light gray paper, white cards, lots of air. A sticky step nav tracks where you are. Details open on tap so the page reads calm at first glance. */
+html{scroll-behavior:smooth}
+body{background:#f3f4f6;color:#1b2430}
+.fill{transition:width .6s ease}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+details[open] .chev{transform:rotate(180deg)}
+.rung:not(.here){opacity:.72}
+.rung.here{box-shadow:0 10px 30px -12px rgba(245,180,0,.6)}
+.chev{transition:transform .2s}
+.reveal{opacity:1;transform:none;transition:opacity .5s ease,transform .5s ease}
+.reveal.pending{opacity:0;transform:translateY(12px)}
+.navdot.active{background:#0f766e;color:#fff}
+@media (prefers-reduced-motion:reduce){.reveal,.fill,.chev{transition:none}.reveal.pending{opacity:1;transform:none}}
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- step nav -->
+<nav class="sticky top-0 z-20 bg-paper/90 backdrop-blur border-b border-line">
+  <div class="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
+    <span class="font-display font-bold text-sm tracking-tight">Where You Stand with AI</span>
+    <div class="flex items-center gap-1.5 overflow-x-auto">
+      <a href="#s1" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="At a glance">1</a>
+      <a href="#s2" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="The ladder">2</a>
+      <a href="#s3" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="What you use it for">3</a>
+      <a href="#s4" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="How you work">4</a>
+      <a href="#s5" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="Paid off">5</a>
+      <a href="#s6" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="Let you down">6</a>
+      <a href="#s7" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="Tonight">7</a>
+      <a href="#s8" class="navdot w-7 h-7 rounded-full grid place-items-center text-xs font-semibold text-mute hover:bg-line" title="Next">8</a>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-3xl mx-auto px-5 pb-32">
+
+<!-- header -->
+<header class="pt-20 pb-24">
+  <p class="text-xs font-semibold tracking-widest uppercase text-mute mb-5">Oct 13, 2026 · ChatGPT</p>
+  <h1 class="font-display font-extrabold text-5xl sm:text-6xl leading-none tracking-tight mb-6">Sample Roofing Co.</h1>
+  <p class="text-lg text-mute max-w-xl">212 chats over four months, June 2 to October 10. What they show about how you use AI, and three things worth trying tonight.</p>
+  <div class="mt-12 flex gap-10">
+    <div><div class="font-display font-bold text-3xl">212</div><div class="text-xs uppercase tracking-wider text-mute mt-1">chats</div></div>
+    <div><div class="font-display font-bold text-3xl">74</div><div class="text-xs uppercase tracking-wider text-mute mt-1">days you used it</div></div>
+    <div><div class="font-display font-bold text-3xl">1<span class="text-mute text-xl">/4</span></div><div class="text-xs uppercase tracking-wider text-mute mt-1">rung on the ladder</div></div>
+  </div>
+</header>
+
+<!-- 1 at a glance -->
+<section id="s1" class="reveal pending py-20 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">1 · At a glance</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-10">The short version</h2>
+  <div class="grid sm:grid-cols-2 gap-5">
+    <div class="bg-card rounded-2xl p-7 shadow-sm"><h3 class="font-display font-bold text-lg mb-2">What's working</h3><p class="text-mute leading-relaxed">You lean on it hardest for customer texts and quotes. 61 chats were some version of "what do I say to this customer." It saves you the blank-page problem.</p></div>
+    <div class="bg-card rounded-2xl p-7 shadow-sm"><h3 class="font-display font-bold text-lg mb-2">What's holding you back</h3><p class="text-mute leading-relaxed">Every chat starts from zero. You re-explained what you do and where you work 38 times. That's why the answers feel generic and you end up rewriting them.</p></div>
+    <div class="bg-amber-soft rounded-2xl p-7"><h3 class="font-display font-bold text-lg mb-2">Tonight</h3><p class="text-amber-ink/80 leading-relaxed">Paste in a "who I am" starter so it stops forgetting you. Save your follow-up text as a template. Keep one chat open per customer instead of starting fresh.</p></div>
+    <div class="bg-teal-soft rounded-2xl p-7"><h3 class="font-display font-bold text-lg mb-2">The bigger picture</h3><p class="text-teal/90 leading-relaxed">The follow-up text you rewrote 23 times could just go out on its own the morning after every job. This report only sees what you've brought to AI. A 20-minute interview finds the rest.</p></div>
+  </div>
+</section>
+
+<!-- 2 ladder -->
+<section id="s2" class="reveal pending py-24 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">2 · The ladder</p>
+  <h2 class="font-display font-extrabold text-4xl sm:text-5xl tracking-tight leading-none mb-5">You're on rung 1 of 4.</h2>
+  <p class="text-lg text-mute max-w-xl mb-12">Each rung up takes a piece of the office work off your plate for good. Tap a rung to see what changes at that level.</p>
+
+  <div class="grid sm:grid-cols-2 gap-5 mb-12">
+    <div class="bg-amber-soft rounded-2xl p-7"><p class="text-xs font-semibold tracking-widest uppercase text-amber-ink/70 mb-2">Where you are now</p><p class="text-amber-ink leading-relaxed">Rung 1. Every one of your 212 chats started from a blank screen. You told it who you are and where you work 38 times, and you still rewrote most of what it gave you.</p></div>
+    <div class="bg-teal-soft rounded-2xl p-7"><p class="text-xs font-semibold tracking-widest uppercase text-teal/70 mb-2">One rung up</p><p class="text-teal leading-relaxed">Rung 2 means it already knows you're a roofer in Spokane with a crew of four who talks plain. The follow-up text you wrote 23 times comes out right the first time. You get there tonight with the starter in step 7.</p></div>
+  </div>
+
+  <div class="relative pl-6">
+    <div class="absolute left-[1.35rem] top-6 bottom-6 w-1 rounded bg-line" aria-hidden="true"></div>
+    <div class="flex flex-col-reverse gap-4">
+    <details class="rung group bg-card rounded-2xl shadow-sm here ring-2 ring-amber" open><summary class="flex items-center gap-4 p-5"><span class="w-11 h-11 rounded-full grid place-items-center font-display font-bold text-lg bg-amber text-amber-ink">1</span><span class="font-display font-semibold text-lg flex-1">You type, it answers</span><span class="text-xs font-semibold tracking-wider uppercase bg-amber text-amber-ink px-2.5 py-1 rounded-full">You are here</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-5 pb-6 pl-[5rem] flex flex-col gap-3"><p class="text-mute leading-relaxed">Every chat starts from zero. It doesn't know you or your customers, so you re-explain each time, and you still do the real work yourself.</p><p class="text-sm"><span class="font-semibold text-teal">What you get back:</span> It types faster than you do. The thinking and the fixing are still yours.</p></div></details>
+    <details class="rung group bg-card rounded-2xl shadow-sm " ><summary class="flex items-center gap-4 p-5"><span class="w-11 h-11 rounded-full grid place-items-center font-display font-bold text-lg bg-line text-mute">2</span><span class="font-display font-semibold text-lg flex-1">It knows your business</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-5 pb-6 pl-[5rem] flex flex-col gap-3"><p class="text-mute leading-relaxed">Your prices, your area, and how you talk to customers are already in it. You stop re-explaining and the answers come back sounding like you.</p><p class="text-sm"><span class="font-semibold text-teal">What you get back:</span> Texts and quotes come out close to right the first time, so most of the rewriting goes away.</p></div></details>
+    <details class="rung group bg-card rounded-2xl shadow-sm " ><summary class="flex items-center gap-4 p-5"><span class="w-11 h-11 rounded-full grid place-items-center font-display font-bold text-lg bg-line text-mute">3</span><span class="font-display font-semibold text-lg flex-1">It's hooked up to your tools</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-5 pb-6 pl-[5rem] flex flex-col gap-3"><p class="text-mute leading-relaxed">It can see your calendar, your invoices, and your texts, so it works from what's going on instead of what you remember to tell it.</p><p class="text-sm"><span class="font-semibold text-teal">What you get back:</span> You can ask who hasn't paid or what's on Thursday and get a real answer without looking it up.</p></div></details>
+    <details class="rung group bg-card rounded-2xl shadow-sm " ><summary class="flex items-center gap-4 p-5"><span class="w-11 h-11 rounded-full grid place-items-center font-display font-bold text-lg bg-line text-mute">4</span><span class="font-display font-semibold text-lg flex-1">It runs jobs without you</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-5 pb-6 pl-[5rem] flex flex-col gap-3"><p class="text-mute leading-relaxed">Follow-ups, quote drafts, and reminders go out on their own. You check in on them instead of doing them.</p><p class="text-sm"><span class="font-semibold text-teal">What you get back:</span> Hours a week back, because the office work that piles up at 9 pm mostly stops piling up.</p></div></details>
+    </div>
+  </div>
+
+  <div class="mt-12 border-l-4 border-amber pl-5 py-1 text-lg leading-relaxed">This report exists to show you which rung you're on and the quickest step up, because each rung takes a piece of the week off your plate for good.</div>
+</section>
+
+<!-- 3 what you use it for -->
+<section id="s3" class="reveal pending py-20 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">3 · What you use AI for</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-10">Where your chats go</h2>
+  <div class="bg-card rounded-2xl p-7 shadow-sm flex flex-col gap-5">
+    <div><div class="flex items-baseline justify-between mb-1.5"><span class="font-semibold">Customer texts & emails</span><span class="text-sm text-mute tabular-nums">61 chats</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="100"></div></div><p class="text-sm text-mute mt-2">Follow-ups after a job, "we're running late" texts, replies to bad reviews.</p></div><div><div class="flex items-baseline justify-between mb-1.5"><span class="font-semibold">Quotes & pricing</span><span class="text-sm text-mute tabular-nums">44 chats</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="72"></div></div><p class="text-sm text-mute mt-2">Estimates, mostly re-roofs and repairs. Every one from scratch.</p></div><div><div class="flex items-baseline justify-between mb-1.5"><span class="font-semibold">Job problems</span><span class="text-sm text-mute tabular-nums">38 chats</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="62"></div></div><p class="text-sm text-mute mt-2">Flashing details, code questions, "is this normal" with a photo.</p></div><div><div class="flex items-baseline justify-between mb-1.5"><span class="font-semibold">Marketing & reviews</span><span class="text-sm text-mute tabular-nums">29 chats</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="47"></div></div><p class="text-sm text-mute mt-2">Facebook posts, asking for reviews, a flyer in August.</p></div><div><div class="flex items-baseline justify-between mb-1.5"><span class="font-semibold">Paperwork & admin</span><span class="text-sm text-mute tabular-nums">22 chats</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="36"></div></div><p class="text-sm text-mute mt-2">Invoices, a warranty letter, a lien notice you didn't finish.</p></div>
+  </div>
+  <div class="mt-8 border-l-4 border-amber pl-5 py-1 leading-relaxed">Half your chats are customer words and quotes. That's the easiest work to hand off first, and it's also the work you redo most.</div>
+</section>
+
+<!-- 4 how you work -->
+<section id="s4" class="reveal pending py-20 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">4 · How you work with it</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-10">Your habits</h2>
+  <div class="flex flex-col gap-6 text-lg leading-relaxed max-w-2xl">
+    <p>Most of your chats are one question, one answer, done. 140 of 212 are a single message. You fire it off, grab the answer, and leave. That works for a quick text. It falls apart for a quote, where the first answer is never the one you send.</p><p>You use it at night. 9 to 11 pm is your busiest window, Tuesdays and Sundays most. That's the office work piling up after the crew goes home.</p><p>You trust it with words. You don't bring it numbers, your calendar, or who owes you money. None of that shows up in four months of chats.</p>
+  </div>
+  <div class="mt-10 bg-ink text-white rounded-2xl p-7 text-lg font-medium leading-relaxed">You use AI like a smart notepad for customer words. One question at a time, late at night, and it has no idea who you are.</div>
+  <div class="mt-10 bg-card rounded-2xl p-7 shadow-sm">
+    <p class="text-xs font-semibold tracking-widest uppercase text-mute mb-5">When you use it · Pacific</p>
+    <div class="flex flex-col gap-4"><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-sm">Morning 6–12</span><span class="text-sm text-mute tabular-nums">41</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="45"></div></div></div><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-sm">Afternoon 12–6</span><span class="text-sm text-mute tabular-nums">58</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="64"></div></div></div><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-sm">Evening 6–9</span><span class="text-sm text-mute tabular-nums">23</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="25"></div></div></div><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-sm">Night 9–12</span><span class="text-sm text-mute tabular-nums">90</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="100"></div></div></div></div>
+  </div>
+  <div class="mt-8 border-l-4 border-amber pl-5 py-1 leading-relaxed">The 9 pm pile-up is the office work, and that's what rungs 3 and 4 take off your plate. Right now AI helps you do it faster. It hasn't made any of it go away.</div>
+</section>
+
+<!-- 5 paid off -->
+<section id="s5" class="reveal pending py-20 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">5 · Where it's already paid off</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-10">Three wins</h2>
+  <div class="flex flex-col gap-4">
+    <div class="bg-card rounded-2xl p-7 shadow-sm"><h3 class="font-display font-bold text-lg mb-2">Bad-review replies</h3><p class="text-mute leading-relaxed">Four times you pasted a rough review and asked what to say, and all four replies read calm and professional. Most owners never get that right.</p></div><div class="bg-card rounded-2xl p-7 shadow-sm"><h3 class="font-display font-bold text-lg mb-2">The August flyer</h3><p class="text-mute leading-relaxed">You went back and forth 11 times on one flyer, your longest chat, and the one you shipped was tight.</p></div><div class="bg-card rounded-2xl p-7 shadow-sm"><h3 class="font-display font-bold text-lg mb-2">Code questions on the roof</h3><p class="text-mute leading-relaxed">19 chats asking about flashing, ice dams, venting. Fast answers while you were on the job, going by the timestamps.</p></div>
+  </div>
+  <div class="mt-8 border-l-4 border-amber pl-5 py-1 leading-relaxed">The flyer shows you can get good work out of it when you stick with it. The next step is getting that result in two rounds instead of 11.</div>
+</section>
+
+<!-- 6 let you down -->
+<section id="s6" class="reveal pending py-20 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">6 · Where it let you down</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-3">Three patterns</h2>
+  <p class="text-mute mb-10">Each one has two examples from your chats and a fix.</p>
+  <div class="flex flex-col gap-4">
+    <details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><span class="font-display font-bold text-lg">It keeps forgetting you</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-6 pb-7 flex flex-col gap-4"><p class="text-mute leading-relaxed">38 chats start by telling it what you do and where. The answers come back generic because it only knows what you typed that minute.</p><ul class="list-disc pl-5 text-sm text-mute flex flex-col gap-1"><li>"I'm a roofer in Spokane, write a text to..." 14 times in September</li><li>Three quotes in one week each re-explained your pricing</li></ul><div class="border-t border-line pt-4"><span class="text-xs font-semibold tracking-widest uppercase text-teal">Fix</span><p class="mt-1">Paste a short "who I am" block at the top of every chat. It's in step 7.</p></div></div></details><details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><span class="font-display font-bold text-lg">You give up after one bad answer</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-6 pb-7 flex flex-col gap-4"><p class="text-mute leading-relaxed">When the first answer misses, you leave. 31 chats end after one reply that clearly wasn't what you wanted.</p><ul class="list-disc pl-5 text-sm text-mute flex flex-col gap-1"><li>Warranty letter, July 9. One reply, never finished.</li><li>Lien notice, August 22. Same.</li></ul><div class="border-t border-line pt-4"><span class="text-xs font-semibold tracking-widest uppercase text-teal">Fix</span><p class="mt-1">Tell it what was wrong in one line. The second answer is usually the one.</p></div></div></details><details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><span class="font-display font-bold text-lg">Same text, written fresh every time</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-6 pb-7 flex flex-col gap-4"><p class="text-mute leading-relaxed">The after-job follow-up text got written 23 separate times. They're all about the same.</p><ul class="list-disc pl-5 text-sm text-mute flex flex-col gap-1"><li>"Text to say thanks and ask for a review", 23 times</li><li>"Text that we're coming tomorrow", 9 times</li></ul><div class="border-t border-line pt-4"><span class="text-xs font-semibold tracking-widest uppercase text-teal">Fix</span><p class="mt-1">Save the best one. Paste it, change the name, send.</p></div></div></details>
+  </div>
+  <div class="mt-8 border-l-4 border-amber pl-5 py-1 leading-relaxed">All three of these are rung 1 problems. They happen because the tool doesn't know you yet, and the first fix in step 7 clears most of them.</div>
+</section>
+
+<!-- 7 tonight -->
+<section id="s7" class="reveal pending py-20 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-amber-ink mb-3">7 · Three things to do tonight</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-3">Three small changes, free, about ten minutes each.</h2>
+  <p class="text-mute mb-10">All of them work in the app you already use.</p>
+  <div class="flex flex-col gap-4">
+    <details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><div><span class="font-display font-bold text-lg block">Your "who I am" starter</span><span class="text-sm text-mute">Why: You re-explained yourself 38 times.</span></div><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-6 pb-7 flex flex-col gap-4"><p class="leading-relaxed">Paste this at the top of any new chat and fix anything that's off. This one change moves you to rung 2.</p><div class="copybox relative bg-paper rounded-xl p-5 pr-20"><button type="button" data-copy class="absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-lg bg-card border border-line hover:bg-line">Copy</button><pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed">I run a roofing company in Spokane, WA. Mostly residential re-roofs and repairs, some gutters. Crew of 4. I talk to customers plain and friendly, no corporate talk. When I ask for a text or email, keep it short, under 60 words, and sound like me.</pre></div></div></details><details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><div><span class="font-display font-bold text-lg block">Your follow-up text</span><span class="text-sm text-mute">Why: You wrote this 23 times.</span></div><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-6 pb-7 flex flex-col gap-4"><p class="leading-relaxed">Save this in your phone. Change the name. Send it the morning after every job.</p><div class="copybox relative bg-paper rounded-xl p-5 pr-20"><button type="button" data-copy class="absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-lg bg-card border border-line hover:bg-line">Copy</button><pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed">Hey [NAME], thanks for having us out. Everything should be set, but if anything looks off give me a call. If you've got a minute, a quick Google review helps us a lot: [LINK]. Thanks again, [YOUR NAME]</pre></div></div></details><details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><div><span class="font-display font-bold text-lg block">One chat per customer</span><span class="text-sm text-mute">Why: 140 of your chats are one-and-done.</span></div><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary><div class="px-6 pb-7 flex flex-col gap-4"><p class="leading-relaxed">Instead of a new chat every time, keep one going per customer or per job. It'll remember what you told it last week.</p><div class="copybox relative bg-paper rounded-xl p-5 pr-20"><button type="button" data-copy class="absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-lg bg-card border border-line hover:bg-line">Copy</button><pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed">Name the chat with the customer's last name and the street. Example: Hendricks, 42 Elm St.</pre></div></div></details>
+  </div>
+</section>
+
+<!-- 8 next -->
+<section id="s8" class="reveal pending py-24 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">8 · Where this leaves you</p>
+  <div class="bg-card rounded-2xl p-8 shadow-sm text-xl leading-relaxed font-medium mb-6">Picture this. The crew finishes the Hendricks job Tuesday. Wednesday 8 am, the thank-you text you rewrote 23 times goes out on its own, with their name on it. Thursday the review request follows. You didn't touch your phone. That's rung 4.</div>
+
+  <div class="bg-ink text-white rounded-2xl p-8 sm:p-10 flex flex-col gap-8">
+    <div class="flex items-center gap-4">
+      <span class="w-12 h-12 rounded-full grid place-items-center font-display font-bold text-xl bg-amber text-amber-ink shrink-0">1</span>
+      <div><p class="text-xs font-semibold tracking-widest uppercase text-white/60">You're on rung 1 of 4</p><p class="font-display font-bold text-2xl leading-tight">Every chat starts from zero.</p></div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-6">
+      <div><p class="text-xs font-semibold tracking-widest uppercase text-amber mb-2">Tonight</p><p class="text-white/85 leading-relaxed">Paste the "who I am" starter from step 7 at the top of your next chat. That one move puts you on rung 2.</p></div>
+      <div><p class="text-xs font-semibold tracking-widest uppercase text-amber mb-2">Then</p><p class="text-white/85 leading-relaxed">A 20-minute interview about the parts of your business that never showed up in these chats, like who owes you money, what's on the calendar, and the calls you miss while you're on a ladder. Most of the hours you could get back are in there.</p></div>
+    </div>
+    <p class="text-white/70 leading-relaxed border-t border-white/15 pt-6">This report could only see what you've brought to AI so far. The stuff that eats your week that you've never thought to use AI for doesn't show up here. Twenty minutes of questions finds the rest.</p>
+    <div>
+      <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-3">To start the interview, copy this and paste it into Claude or ChatGPT</p>
+      <div class="copybox relative bg-white/10 rounded-xl p-5 pr-14">
+        <button type="button" data-copy data-copied="Copied" aria-label="Copy" class="absolute top-3 right-3 w-9 h-9 grid place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-white/90">Start my AI interview.
+
+My audit is here: https://abcdefgh.supabase.co/storage/v1/object/public/audits/x7k2pq9d3m/
+It has three files: findings.json (what the audit found), report.html (the report I read), and session.md (the chat that produced it). Download and read all three before you say anything.
+
+If you're on the same computer the audit ran on, the same three files are in /Users/sample/ai-standing-out/ and you can read them there instead.
+
+The interview instructions are here: https://raw.githubusercontent.com/joeyfarbstein/joeyfarbstein-ai/main/skills/ai-interview/SKILL.md
+Fetch them and follow them exactly. (Full project: https://github.com/joeyfarbstein/joeyfarbstein-ai)
+
+I'm Sample Roofing Co., on rung 1 of 4. Open with a one-line playback of what the audit found, then ask your first question. Don't explain the process.</pre>
+      </div>
+      <p class="text-sm text-white/50 mt-3">Works in a brand-new chat, on any computer, any day. Everything it needs is in the text.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="pt-10 text-sm text-mute">Built from your own chats. Nothing here was shared with anyone. This sample is filled with made-up example data to show the layout.</footer>
+
+</main>
+
+<script>
+// reveal on scroll
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('pending');io.unobserve(e.target);}}),{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+// nav scroll-spy
+const dots=[...document.querySelectorAll('.navdot')];
+const secs=dots.map(d=>document.querySelector(d.getAttribute('href')));
+const spy=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){dots.forEach(d=>d.classList.remove('active'));const i=secs.indexOf(e.target);if(i>-1)dots[i].classList.add('active');}}),{rootMargin:'-40% 0px -55% 0px'});
+secs.forEach(s=>s&&spy.observe(s));
+// copy buttons
+document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',async()=>{
+  const t=b.closest('.copybox').querySelector('pre').innerText;
+  const done=b.dataset.copied||'Copied';const orig=b.innerHTML;try{await navigator.clipboard.writeText(t);b.textContent=done;}
+  catch(e){const r=document.createRange();r.selectNodeContents(b.closest('.copybox').querySelector('pre'));getSelection().removeAllRanges();getSelection().addRange(r);b.textContent='Selected';}
+  setTimeout(()=>b.innerHTML=orig,2500);
+}));
+// animate bars once visible
+const bo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.style.width=e.target.dataset.w+'%';bo.unobserve(e.target);}}),{threshold:.3});
+document.querySelectorAll('.fill[data-w]').forEach(f=>{f.style.width='0%';bo.observe(f);});
+</script>
+</body>
+</html>
+<!--
+SNIPPETS the writer uses to fill the slots:
+
+BUCKET_ROWS (one per bucket; pct = count / max * 100):
+  <div><div class="flex items-baseline justify-between mb-1.5"><span class="font-semibold">{{name}}</span><span class="text-sm text-mute tabular-nums">{{count}} chats</span></div>
+  <div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="{{pct}}"></div></div>
+  <p class="text-sm text-mute mt-2">{{one sentence with an example}}</p></div>
+
+TIME_ROWS (same shape, label like "Night 9–12", no sentence):
+  <div><div class="flex items-baseline justify-between mb-1.5"><span class="text-sm">{{label}}</span><span class="text-sm text-mute tabular-nums">{{count}}</span></div>
+  <div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="{{pct}}"></div></div></div>
+
+HOW_PARAGRAPHS: <p>…</p> per paragraph.
+
+WIN_ITEMS:
+  <div class="bg-card rounded-2xl p-7 shadow-sm"><h3 class="font-display font-bold text-lg mb-2">{{title}}</h3><p class="text-mute leading-relaxed">{{2-3 sentences with proof}}</p></div>
+
+FRICTION_ITEMS (collapsed by default):
+  <details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><span class="font-display font-bold text-lg">{{title}}</span><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary>
+  <div class="px-6 pb-7 flex flex-col gap-4"><p class="text-mute leading-relaxed">{{pattern}}</p>
+  <ul class="list-disc pl-5 text-sm text-mute flex flex-col gap-1"><li>{{example 1}}</li><li>{{example 2}}</li></ul>
+  <div class="border-t border-line pt-4"><span class="text-xs font-semibold tracking-widest uppercase text-teal">Fix</span><p class="mt-1">{{one sentence}}</p></div></div></details>
+
+QUICK_WINS (collapsed by default):
+  <details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><div><span class="font-display font-bold text-lg block">{{title}}</span><span class="text-sm text-mute">Why: {{one line of evidence}}</span></div><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary>
+  <div class="px-6 pb-7 flex flex-col gap-4"><p class="leading-relaxed">{{what to do}}</p>
+  <div class="copybox relative bg-paper rounded-xl p-5 pr-20"><button type="button" data-copy class="absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-lg bg-card border border-line hover:bg-line">Copy</button><pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed">{{paste-in text}}</pre></div></div></details>
+
+LADDER_NOW: 2 sentences. What rung they're on, in their terms, and what it costs them in hours or rewrites. Cite a count.
+LADDER_NEXT: 2 sentences. What the next rung up would change for THEM specifically. Tie to something you saw.
+LADDER_WHY: 1-2 sentences. Why this ladder is the whole point of the report. Plain.
+S3_SOWHAT / S4_SOWHAT / S5_SOWHAT / S6_SOWHAT: one or two sentences each, "so what does this mean for you". Always tie back to hours, money, or the ladder.
+
+CTA_RUNG_LINE: one line restating their rung in their terms. "Every chat starts from zero."
+CTA_TONIGHT: 1-2 sentences. The single quick win to do first, and which rung it gets them to.
+CTA_THEN: 1-2 sentences. The next step based on what the audit found: the interview, and what it goes looking for in THEIR business (name the gaps you couldn't see).
+
+INTERVIEW_PROMPT: leave this slot alone. scripts/handoff.py fills it after upload.
+
+RUNG slots. For the rung they're on:
+  RUNGn_OPEN = "open" (starts expanded); RUNGn_RING = "here ring-2 ring-amber"
+  RUNGn_RING = "ring-2 ring-amber"   RUNGn_DOT = "bg-amber text-amber-ink"
+  RUNGn_YOU  = <span class="text-xs font-semibold tracking-wider uppercase bg-amber text-amber-ink px-2.5 py-1 rounded-full">You are here</span>
+For the others: RUNGn_OPEN = ""   RUNGn_RING = ""   RUNGn_DOT = "bg-line text-mute"   RUNGn_YOU = ""
+-->

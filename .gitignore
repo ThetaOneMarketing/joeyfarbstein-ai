@@ -1,0 +1,5 @@
+ai-standing-out/
+__pycache__/
+*.pyc
+.DS_Store
+interview-notes.md
