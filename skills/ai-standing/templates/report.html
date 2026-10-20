@@ -169,19 +169,29 @@ details[open] .chev{transform:rotate(180deg)}
       <div><p class="text-xs font-semibold tracking-widest uppercase text-amber mb-2">Tonight</p><p class="text-white/85 leading-relaxed">{{CTA_TONIGHT}}</p></div>
       <div><p class="text-xs font-semibold tracking-widest uppercase text-amber mb-2">Then</p><p class="text-white/85 leading-relaxed">{{CTA_THEN}}</p></div>
     </div>
+    <div class="border-t border-white/15 pt-6">
+      <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-4">Your roadmap, three steps up</p>
+      <ol class="flex flex-col gap-4">
+        {{ROADMAP_STEPS}}
+      </ol>
+    </div>
     <p class="text-white/70 leading-relaxed border-t border-white/15 pt-6">{{CLOSER}}</p>
     <div>
       <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-3">To start the interview, copy this and paste it into Claude or ChatGPT</p>
       <div class="copybox relative bg-white/10 rounded-xl p-5 pr-14">
         <button type="button" data-copy data-copied="Copied" aria-label="Copy" class="absolute top-3 right-3 w-9 h-9 grid place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-white/90">{{INTERVIEW_PROMPT}}</pre>
+        <pre id="interview-prompt" class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-white/90">{{INTERVIEW_PROMPT}}</pre>
       </div>
       <p class="text-sm text-white/50 mt-3">Works in a brand-new chat, on any computer, any day. Everything it needs is in the text.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-4">
+      <a data-book-joey href="#" class="bg-amber text-amber-ink font-display font-bold text-lg px-6 py-3 rounded-xl hover:brightness-95">Book a call with Joey</a>
+      <span class="text-sm text-white/60">Rather talk it through? Twenty minutes. He reads your report first.</span>
     </div>
   </div>
 </section>
 
-<footer class="pt-10 text-sm text-mute">Built from your own chats. Nothing here was shared with anyone. {{FOOTER_NOTE}}</footer>
+<footer class="pt-10 text-sm text-mute">Built from your own chats. When this report goes to Joey, it is saved at an unlisted web link so he can read it before you talk. Nobody can find it without that exact link. {{FOOTER_NOTE}}</footer>
 
 </main>
 
@@ -201,6 +211,10 @@ document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',a
   catch(e){const r=document.createRange();r.selectNodeContents(b.closest('.copybox').querySelector('pre'));getSelection().removeAllRanges();getSelection().addRange(r);b.textContent='Selected';}
   setTimeout(()=>b.innerHTML=orig,2500);
 }));
+// "Book a call with Joey" buttons. The link comes from config.json (BOOKING_URL); python3 chatgpt/build_pack.py stamps it here.
+// Until it's set, the buttons email Joey instead of pointing at a made-up link.
+(function(){var BOOKING_URL="REPLACE_WITH_BOOKING_URL";var ok=/^https?:\/\//.test(BOOKING_URL);
+document.querySelectorAll('[data-book-joey]').forEach(function(a){if(ok){a.href=BOOKING_URL;a.target='_blank';a.rel='noopener';}else{a.href='mailto:joe@localprosolutions.com?subject='+encodeURIComponent('Book a call with Joey');a.textContent='Email Joey to book a call';}});})();
 // animate bars once visible
 const bo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.style.width=e.target.dataset.w+'%';bo.unobserve(e.target);}}),{threshold:.3});
 document.querySelectorAll('.fill[data-w]').forEach(f=>{f.style.width='0%';bo.observe(f);});
@@ -239,7 +253,14 @@ QUICK_WINS (collapsed by default). Set once, works forever. Never a paste-every-
     <span class="self-start text-xs font-semibold tracking-wider uppercase bg-teal-soft text-teal px-2.5 py-1 rounded-full">Set once</span>
   </div></details>
 
+ROADMAP_STEPS (three, in order). Step 1 is the first thing to fix in the business. For a trades or home-service
+business where calls bring the work, step 1 is usually "Stop losing the calls you can't answer" IF the chats or
+answers point that way (on jobs all day, voicemail, slow callbacks). Plain words, no product names, no prices.
+  <li class="flex gap-4"><span class="w-8 h-8 rounded-full grid place-items-center font-display font-bold bg-amber text-amber-ink shrink-0">{{n}}</span><div><p class="font-semibold text-white">{{step, a few words}}</p><p class="text-white/70 text-sm leading-relaxed">{{one line: what you get back, in hours or jobs}}</p></div></li>
+
 INTERVIEW_PROMPT: leave this slot alone. scripts/handoff.py fills it after upload.
+
+BOOKING: leave the data-book-joey button and the BOOKING_URL line alone. The link comes from config.json.
 
 RUNG slots. For the rung they're on:
   RUNGn_OPEN = "open" (starts expanded); RUNGn_RING = "here ring-2 ring-amber"

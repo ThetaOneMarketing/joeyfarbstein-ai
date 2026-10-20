@@ -19,16 +19,24 @@ Run the reader on whatever they point you at (a folder or an export file):
 python3 scripts/read_history.py <path> --out ai-standing-out
 ```
 
-It handles all three sources on its own. You get:
+It handles all three sources on its own. On a Claude Code folder it skips scheduled jobs, headless runs, subagents, and machine messages, so the counts are the person's own typing (`skipped_not_typed_by_person` in summary.json says how many it left out). You get:
 - `ai-standing-out/summary.json` — counts: chats, messages, dates, time of day (UTC), message length, one-message chats vs long chats, tools, common words.
 - `ai-standing-out/chats.jsonl` — every chat, their messages in full, AI replies trimmed.
 - `ai-standing-out/sample.md` — a readable sample of their own messages, newest first.
 
 Read `summary.json` and `sample.md` fully. Then read `chats.jsonl` — all of it if under ~300 chats; otherwise read the newest 150 and skim titles for the rest. You need the actual words. The counts alone will not get you the "seen" moments.
 
-If they told you their timezone, convert the hour-of-day tallies before you write. If not, ask once: "What timezone are you in?" and wait. Time of day is one of the best "seen" moments, so don't skip it.
+If they told you their timezone, convert the hour-of-day tallies before you write. If not, ask once: "What timezone are you in?" and wait. Time of day is one of the best "seen" moments, so don't skip it. If `possible_timezone_change` is true, the busiest hour jumped between months (`busiest_hour_utc_by_month`); ask whether they moved or traveled before you read anything into late nights.
 
-If there are fewer than 10 chats, say so plainly up front and keep the report short. Don't pad.
+**Thin or empty history.** If there are fewer than 10 chats, or the reader finds nothing, don't stop and don't pad. Say one line ("There isn't much history here yet, so I have six quick questions first.") and ask these in one message, numbered, short answers fine:
+1. What's your business, where, and how many people work in it (counting you)?
+2. What have you used AI for so far? If nothing yet, say "nothing yet."
+3. How do new customers usually reach you: calls, texts, web form, Google, referrals?
+4. When a call comes in and you can't pick up, what happens to it?
+5. What office job eats the most of your week?
+6. What do you wish you could just hand to someone else?
+
+Then write the report from their answers plus whatever chats there are. Put "Built from your answers to six questions, not from a long chat history." under the title, quote their answers as evidence, keep thin sections to one honest line, and set `based_on` in findings.json to `answers` (or `both`).
 
 ## Step 2 — Find what matters
 
@@ -89,7 +97,7 @@ Format each win like the insights report does it: title, *why for you* (the evid
 
 ## Step 3 — Write the report
 
-Fill in `templates/report.html`. Keep the structure exactly. Put the finished file at `ai-standing-out/where-you-stand.html` and open it for them.
+Fill in `templates/report.html`. Keep the structure exactly. Save the finished file as `ai-standing-out/report.html` and open it for them.
 
 ### The sections, in order
 
@@ -118,7 +126,7 @@ Fill in `templates/report.html`. Keep the structure exactly. Put the finished fi
 
 **7. Three things to do tonight.** The quick wins. Each: title, *why* (one line of evidence), *do this* (the paste-in block or steps, in a copy box).
 
-**8. Where this leaves you.** The close. Four parts, in this order:
+**8. Where this leaves you.** The close. Five parts, in this order:
 - *The glimpse* — one scene, as above.
 - *Your rung, restated* — one line. "Rung 1. Every chat starts from zero." They should recognize it from section 2.
 - *Tonight* — the ONE quick win to do first, and which rung it moves them to. Pick the one with the strongest evidence.
@@ -126,7 +134,9 @@ Fill in `templates/report.html`. Keep the structure exactly. Put the finished fi
 
 > This report could only see what you've brought to AI so far. The stuff that eats your week that you've never thought to use AI for doesn't show up here. Twenty minutes of questions finds the rest.
 
-Then a single button or line for the next step. If a booking link or next-step command was given to you, use it. If not, leave the placeholder.
+- *Your roadmap* — three steps up, in order, each a few words plus one line on what they get back (hours or jobs). Goes in `{{ROADMAP_STEPS}}`. Step 1 is the first thing to fix in the business, not in the AI app. For a trades or home-service business where calls bring the work, first check whether missed calls and slow replies are losing them jobs (on a roof all day, voicemail, callbacks at night). If the chats or their answers point that way, step 1 is "Stop losing the calls you can't answer": every missed call gets a text back within a minute and the job gets booked. Plain words, no product names, no prices, no pitch. If they already have it covered or calls aren't how they get work, lead with the biggest real gap instead.
+
+The template already has the copy-paste interview block and a "Book a call with Joey" button. Leave both alone: `handoff.py` fills the block, and the button's link comes from `config.json` in the project (BOOKING_URL). Don't type a booking link in yourself.
 
 ### Tone rules — these are not optional
 
@@ -154,7 +164,7 @@ Before you hand it over:
 4. Banned-word scan. None present.
 4b. Run the humanizer pass on every paragraph you wrote (the `humanizer` skill, if installed; otherwise its rules). Watch especially for: one-line closers that restate the point ("That's the real win."), not-X-but-Y framing, rows of fragments, forced lists of three, and dashes. No em dashes anywhere in the report.
 5. Nothing personal or about a named customer slipped through.
-6. The closer points to the interview, once, and nowhere else does the report sell anything.
+6. The only asks are at the very end: the interview block and the Book a call button. Nothing else in the report sells anything.
 
 ## Step 5 — Bundle, upload, and hand off
 
@@ -179,6 +189,8 @@ The interview may happen in a different chat, a different app, or on a different
   "quick_wins": ["title 1", "title 2", "title 3"],
   "glimpse": "the glimpse text",
   "not_seen": ["invoices", "scheduling", "missed calls"],
+  "roadmap": ["Stop losing the calls you can't answer", "step 2", "step 3"],
+  "based_on": "history | answers | both",
   "starter_block": "the 'who I am' paste-in you wrote for them, if you wrote one"
 }
 ```
@@ -187,7 +199,7 @@ The interview may happen in a different chat, a different app, or on a different
 
 **5b. Write `ai-standing-out/session.md`.** The whole conversation you just had with them, as plain text: every message they sent and every message you sent, in order, with "Me:" and "AI:" labels. Not a summary. The interview reads this to see how they talk and what they reacted to. Leave out tool output and file contents; keep the words.
 
-**5c. Save the report as `ai-standing-out/report.html`** (this is the file from step 3; same file, this name). Leave the `{{INTERVIEW_PROMPT}}` slot in it untouched.
+**5c. Check the report is at `ai-standing-out/report.html`** (the file from step 3). Leave the `{{INTERVIEW_PROMPT}}` slot in it untouched.
 
 **5d. Run the handoff script:**
 

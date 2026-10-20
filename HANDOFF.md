@@ -1,5 +1,7 @@
 # Handoff for Claude Code
 
+> **History, not current.** This is the October 13 handoff that got the repo created and the first run done. The repo exists now and steps 1 to 4 are done. For the current state, read [FOR-COLLABORATORS.md](FOR-COLLABORATORS.md); for testing, [TESTING.md](TESTING.md). The interview is no longer a stub (see `skills/ai-interview/SKILL.md`).
+
 Read this first. You're picking up a project Joey built with Claude on claude.ai on Oct 13, 2026. Everything you need is in this folder. The job right now is to get it onto GitHub and run a real test. Plain language, short steps. Joey is not a developer; explain anything you do in one line each.
 
 ## What this is

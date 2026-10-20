@@ -1,12 +1,21 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "joeyfarbstein-ai",
   "description": "Where You Stand with AI: an audit of how a contractor already uses AI, then a short interview about the rest of their business.",
   "version": "0.1.0",
-  "author": { "name": "Joey Farbstein", "url": "https://localprosolutions.com" },
+  "author": {
+    "name": "Joey Farbstein",
+    "url": "https://localprosolutions.com"
+  },
   "homepage": "https://github.com/ThetaOneMarketing/joeyfarbstein-ai",
   "repository": "https://github.com/ThetaOneMarketing/joeyfarbstein-ai",
   "license": "MIT",
-  "keywords": ["contractors", "ai audit", "local service business"],
-  "skills": ["./skills/ai-standing", "./skills/ai-interview"]
+  "keywords": [
+    "contractors",
+    "ai audit",
+    "local service business"
+  ],
+  "skills": [
+    "./skills/ai-standing",
+    "./skills/ai-interview"
+  ]
 }

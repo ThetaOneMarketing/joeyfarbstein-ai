@@ -15,6 +15,14 @@ Writes to --out (default ./ai-standing-out):
   chats.jsonl    one line per chat: title, dates, source, messages [{who, text, when}]
   sample.md      a readable sample of the person's own messages, for the writer
 
+Claude Code folders: scheduled jobs, headless runs (claude -p), subagents and
+temp-folder sessions are skipped, and machine messages (task notifications,
+shell echoes, skill bodies, "Request interrupted" markers) are not counted as
+the person's words. The counts in summary.json say how many were skipped.
+
+ChatGPT exports: only the branch the person actually kept (current_node) is
+read, and hidden custom-instructions messages are not counted as theirs.
+
 Only the person's own messages are kept at full length. Assistant replies are
 trimmed to a short preview — the report is about how THEY use AI, not what AI said.
 """
@@ -65,7 +73,28 @@ def text_of(content):
     if isinstance(content, dict):
         if "parts" in content: return text_of(content["parts"])
         if "text" in content: return str(content["text"])
+        return ""   # e.g. ChatGPT custom-instructions blocks: not something the person typed
     return str(content)
+
+# Messages that land in the log as "user" but were written by a machine, not the person.
+MACHINE_PREFIXES = (
+    "<task-notification", "<bash-input>", "<bash-stdout>", "<bash-stderr>",
+    "<local-command-stdout>", "<user-prompt-submit-hook>", "<command-message>",
+    "[Request interrupted", "Caveat: The messages below were generated",
+    "Base directory for this skill:", "This session is being continued from a previous conversation",
+)
+# First-message markers of a scheduled job or headless run (Claude Code). From the first real run.
+HEADLESS_MARKERS = (
+    "<scheduled-task", "running headless", "Print exactly", "RESULT: OK", "/insights",
+    "You are a subagent", "You are running as a scheduled",
+)
+# Claude Code project folders that are scratch space, not a person at a keyboard.
+TEMP_PROJECT_PREFIXES = ("-private-var-", "-private-tmp", "-tmp", "-var-folders-")
+HEADLESS_ENTRYPOINTS = {"sdk-cli", "sdk-ts", "sdk-py", "sdk"}
+
+def is_machine_text(t):
+    s = t.lstrip()
+    return s.startswith(MACHINE_PREFIXES)
 
 def clean_user(t):
     t = t.strip()
@@ -73,25 +102,43 @@ def clean_user(t):
     t = re.sub(r"<system-reminder>.*?</system-reminder>", "", t, flags=re.S)
     t = re.sub(r"<command-[a-z]+>.*?</command-[a-z]+>", "", t, flags=re.S)
     t = re.sub(r"<local-command-[a-z]+>.*?</local-command-[a-z]+>", "", t, flags=re.S)
-    return t.strip()[:MAX_USER_CHARS]
+    t = re.sub(r"\[Image #\d+\]", "", t)
+    t = t.strip()
+    if is_machine_text(t):
+        return ""
+    return t[:MAX_USER_CHARS]
 
 # ---------- readers: each yields dict(title, source, started, messages=[{who,text,when}]) ----------
 
+SKIPPED = collections.Counter()   # why chats were left out; reported in summary.json
+
 def read_claude_code(root: Path):
     for f in sorted(root.rglob("*.jsonl")):
-        msgs, tools, model = [], collections.Counter(), None
+        rel_parts = f.relative_to(root).parts
+        project = f.parent.name
+        # subagent transcripts live in a "subagents" folder next to the session; they're the AI talking to itself
+        if "subagents" in rel_parts or f.name.startswith("agent-"):
+            SKIPPED["subagent"] += 1; continue
+        top = rel_parts[0] if len(rel_parts) > 1 else project
+        if top.startswith(TEMP_PROJECT_PREFIXES):
+            SKIPPED["temp_folder"] += 1; continue
+        msgs, tools, model, headless = [], collections.Counter(), None, False
         with open(f, errors="ignore") as fh:
             for line in fh:
                 try: d = json.loads(line)
                 except Exception: continue
                 t = d.get("type")
                 if t not in ("user", "assistant"): continue
+                if d.get("isSidechain"): continue            # subagent turns inside a session
+                if str(d.get("entrypoint") or "") in HEADLESS_ENTRYPOINTS: headless = True
                 m = d.get("message") or {}
                 content = m.get("content")
                 # skip pure tool-result turns (they're plumbing, not the person talking)
                 if t == "user" and isinstance(content, list) and content and all(
                     isinstance(p, dict) and p.get("type") == "tool_result" for p in content):
                     continue
+                if t == "user" and (d.get("isMeta") or d.get("isCompactSummary")):
+                    continue                                   # injected by Claude Code, not typed
                 if t == "assistant" and isinstance(content, list):
                     for p in content:
                         if isinstance(p, dict) and p.get("type") == "tool_use":
@@ -101,12 +148,17 @@ def read_claude_code(root: Path):
                 txt = clean_user(txt) if t == "user" else txt.strip()[:ASSIST_PREVIEW]
                 if not txt: continue
                 msgs.append({"who": "me" if t == "user" else "ai", "text": txt, "when": iso(d.get("timestamp"))})
-        if not any(m["who"] == "me" for m in msgs): continue
+        if not any(m["who"] == "me" for m in msgs):
+            SKIPPED["no_typed_messages"] += 1; continue
         first_me = next(m["text"] for m in msgs if m["who"] == "me")
+        if headless:
+            SKIPPED["headless_run"] += 1; continue
+        if any(k.lower() in first_me[:2000].lower() for k in HEADLESS_MARKERS):
+            SKIPPED["scheduled_or_headless"] += 1; continue
         yield {
             "title": first_me[:80].replace("\n", " "),
             "source": "claude-code",
-            "project": f.parent.name,
+            "project": project,
             "started": next((m["when"] for m in msgs if m["when"]), None),
             "tools": dict(tools),
             "model": model,
@@ -133,25 +185,41 @@ def read_claude_ai(convs):
             "messages": msgs,
         }
 
+def _chatgpt_path(mapping, current):
+    """The messages on the branch the person actually kept, root first.
+    ChatGPT stores every edit and regenerate as a branch. current_node marks the one on screen;
+    walk from it up to the root. Older exports without current_node: walk down taking the last child."""
+    if current and current in mapping:
+        path, node, seen = [], current, set()
+        while node and node not in seen and node in mapping:
+            seen.add(node); path.append(node)
+            node = mapping[node].get("parent")
+        return list(reversed(path))
+    root = next((k for k, v in mapping.items() if v.get("parent") is None), None)
+    path, node, seen = [], root, set()
+    while node and node not in seen:
+        seen.add(node); path.append(node)
+        kids = (mapping.get(node) or {}).get("children") or []
+        node = kids[-1] if kids else None
+    return path
+
 def read_chatgpt(convs):
     for c in convs:
         mapping = c.get("mapping") or {}
-        # walk from root, always taking the LAST child (the active branch, usually)
-        root = next((k for k, v in mapping.items() if v.get("parent") is None), None)
-        msgs, node = [], root
-        seen = set()
-        while node and node not in seen:
-            seen.add(node)
-            v = mapping.get(node) or {}
-            m = v.get("message")
-            if m and m.get("author", {}).get("role") in ("user", "assistant"):
-                who = "me" if m["author"]["role"] == "user" else "ai"
-                txt = text_of(m.get("content"))
-                txt = clean_user(txt) if who == "me" else txt.strip()[:ASSIST_PREVIEW]
-                if txt:
-                    msgs.append({"who": who, "text": txt, "when": iso(m.get("create_time"))})
-            kids = v.get("children") or []
-            node = kids[-1] if kids else None
+        msgs = []
+        for node in _chatgpt_path(mapping, c.get("current_node")):
+            m = (mapping.get(node) or {}).get("message")
+            if not m or m.get("author", {}).get("role") not in ("user", "assistant"): continue
+            meta = m.get("metadata") or {}
+            ctype = (m.get("content") or {}).get("content_type")
+            # custom instructions and other hidden context ride along as "user" messages; they aren't typed
+            if meta.get("is_visually_hidden_from_conversation") or ctype in ("user_editable_context", "model_editable_context"):
+                continue
+            who = "me" if m["author"]["role"] == "user" else "ai"
+            txt = text_of(m.get("content"))
+            txt = clean_user(txt) if who == "me" else txt.strip()[:ASSIST_PREVIEW]
+            if txt:
+                msgs.append({"who": who, "text": txt, "when": iso(m.get("create_time"))})
         if not any(m["who"] == "me" for m in msgs): continue
         yield {
             "title": (c.get("title") or msgs[0]["text"][:80]).replace("\n", " "),
@@ -212,6 +280,11 @@ def tally(chats):
         for w in re.findall(r"[a-zA-Z]{4,}", (c["title"] + " " + c["messages"][0]["text"]).lower()):
             if w not in stop: words[w] += 1
     span = sorted(w for w in whens)
+    by_month = collections.defaultdict(collections.Counter)
+    for w in whens: by_month[w.strftime("%Y-%m")][w.hour] += 1
+    peak_by_month = {k: v.most_common(1)[0][0] for k, v in sorted(by_month.items())}
+    peaks = list(peak_by_month.values())
+    shift = any(abs(a - b) % 24 >= 5 and abs(a - b) % 24 <= 19 for a, b in zip(peaks, peaks[1:]))
     return {
         "chats": len(chats),
         "my_messages": len(me),
@@ -227,6 +300,9 @@ def tally(chats):
         "tools_used": dict(tools.most_common(15)),
         "common_words": dict(words.most_common(40)),
         "sources": dict(collections.Counter(c["source"] for c in chats)),
+        "busiest_hour_utc_by_month": peak_by_month,
+        "possible_timezone_change": shift,
+        "skipped_not_typed_by_person": dict(SKIPPED),
     }
 
 def write_sample(chats, out: Path):
@@ -262,6 +338,10 @@ def main():
     json.dump(summary, open(out / "summary.json", "w"), indent=2)
     write_sample(chats, out)
     print(f"Read {summary['chats']} chats ({summary['my_messages']} of your messages) from {src}.")
+    if SKIPPED:
+        print(f"Skipped {sum(SKIPPED.values())} sessions that weren't the person typing: {dict(SKIPPED)}")
+    if summary["possible_timezone_change"]:
+        print("Heads up: the busiest hour moves a lot between months. The person may have changed timezones.")
     print(f"Dates: {summary['first_chat']} to {summary['last_chat']}. Wrote {out}/summary.json, chats.jsonl, sample.md")
 
 if __name__ == "__main__":

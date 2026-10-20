@@ -10,11 +10,13 @@ Expects these in --out (the audit skill writes them):
   report.html     the finished report
   session.md      the chat that produced the report, as the AI wrote it down
 
-Does:
-  1. Uploads the three files to the audit endpoint. Gets back a link like
-     https://<host>/audits/x7k2pq9d/  (unguessable id, read-only)
+Does, in this order:
+  1. Uploads findings.json and session.md to the audit endpoint. Gets back a link like
+     https://<host>/audits/x7k2pq9d3m/  (unguessable id, read-only)
   2. Writes start-interview.txt: the prompt the person pastes into any AI to start the interview.
   3. Fills that prompt into report.html where {{INTERVIEW_PROMPT}} is, and rewrites the file.
+  4. Uploads the filled report.html into the same bundle (same id).
+     (The first run uploaded the report before step 3, so Joey's copy had an empty prompt box.)
 
 If upload fails or --no-upload, the prompt still gets written with the local folder path only,
 so the handoff works on the same computer.
@@ -48,16 +50,17 @@ def multipart(fields: dict, files: list):
     return body, f"multipart/form-data; boundary={boundary}"
 
 
-def upload(out: Path, url: str):
-    present = [(f, out / f) for f in FILES if (out / f).exists()]
-    body, ctype = multipart({}, present)
+def upload(out: Path, url: str, names, bundle_id=None):
+    present = [(f, out / f) for f in names if (out / f).exists()]
+    fields = {"id": bundle_id} if bundle_id else {}
+    body, ctype = multipart(fields, present)
     req = urllib.request.Request(url, data=body, method="POST",
                                  headers={"Content-Type": ctype, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as r:
         data = json.loads(r.read().decode())
     if "url" not in data:
         raise RuntimeError(f"upload endpoint returned no url: {data}")
-    return data["url"].rstrip("/") + "/"
+    return data["url"].rstrip("/") + "/", data.get("id")
 
 
 def build_prompt(bundle_url: str | None, local_dir: Path, findings: dict):
@@ -97,11 +100,12 @@ def main():
         print("Warning: session.md not found. The interview won't see the chat history. Continuing.")
 
     findings = json.loads((out / "findings.json").read_text())
-    bundle_url = None
+    bundle_url, bundle_id = None, None
     if not a.no_upload and "REPLACE-WITH" not in a.upload_url:
         try:
-            bundle_url = upload(out, a.upload_url)
-            print(f"Uploaded. Bundle link: {bundle_url}")
+            # report.html goes up last, after the interview prompt is written into it
+            bundle_url, bundle_id = upload(out, a.upload_url, ["findings.json", "session.md"])
+            print(f"Uploaded findings. Bundle link: {bundle_url}")
         except Exception as e:
             print(f"Upload failed ({e}). Falling back to local-only handoff.")
     elif "REPLACE-WITH" in a.upload_url:
@@ -120,6 +124,13 @@ def main():
         print("Prompt written into report.html.")
     else:
         print("report.html had no {{INTERVIEW_PROMPT}} slot; prompt is in start-interview.txt.")
+
+    if bundle_url and bundle_id:
+        try:
+            upload(out, a.upload_url, ["report.html"], bundle_id)
+            print(f"Uploaded report. Joey's copy: {bundle_url}report.html")
+        except Exception as e:
+            print(f"Report upload failed ({e}). findings.json and session.md are up; the report is only local.")
     print("\n--- paste this into any AI to start the interview ---\n")
     print(prompt)
 

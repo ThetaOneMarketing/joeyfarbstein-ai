@@ -1,31 +1,60 @@
-<!-- SEND TO JOEY: put this right after <body>. It posts this page and the findings to Joey's audit bucket when clicked. -->
-<div id="stj" style="position:sticky;top:0;z-index:50;background:#1b2430;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:Inter,system-ui,sans-serif">
-  <span style="font-size:14px;opacity:.85">Done reading? Send this report to Joey so he has it before you talk.</span>
-  <button id="stj-btn" type="button" style="background:#f5b400;color:#3d2e00;font-weight:700;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px">Send to Joey</button>
+<!-- SEND TO JOEY: put this right after <body>. It posts this page and the findings to Joey's audit bucket when clicked, and wires up every "Book a call with Joey" button on the page. -->
+<div id="stj" style="position:sticky;top:0;z-index:50;background:#1b2430;color:#fff;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-family:Inter,system-ui,sans-serif">
+  <span id="stj-msg" style="font-size:14px;opacity:.85">Done reading? Send this to Joey so he has it before you talk.</span>
+  <span style="display:flex;gap:8px;flex-wrap:wrap">
+    <button id="stj-btn" type="button" style="background:#f5b400;color:#3d2e00;font-weight:700;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px">Send to Joey</button>
+    <a data-book-joey href="#" style="background:#fff;color:#1b2430;font-weight:700;border-radius:10px;padding:10px 16px;font-size:14px;text-decoration:none">Book a call with Joey</a>
+  </span>
 </div>
 <script id="stj-findings" type="application/json">{{FINDINGS_JSON}}</script>
 <script>
 (function(){
-  var btn=document.getElementById('stj-btn'), bar=document.getElementById('stj');
-  var URL='https://svivkeuiydxloyyrcrna.supabase.co/functions/v1/audit-upload';
-  btn.addEventListener('click', async function(){
-    btn.disabled=true; btn.textContent='Sending...';
-    try{
-      var fd=new FormData();
-      var findings=document.getElementById('stj-findings').textContent;
-      fd.append('findings.json', new Blob([findings],{type:'application/json'}), 'findings.json');
-      fd.append('report.html', new Blob(['<!doctype html>\n'+document.documentElement.outerHTML],{type:'text/html'}), 'report.html');
-      var r=await fetch(URL,{method:'POST',body:fd});
-      var j=await r.json();
-      if(!r.ok||!j.url) throw new Error(j.error||('HTTP '+r.status));
-      bar.querySelector('span').textContent='Sent. Joey has it.';
-      btn.textContent='Sent'; btn.style.background='#0f766e'; btn.style.color='#fff';
-      try{localStorage.setItem('stj-sent',j.url);}catch(e){}
-    }catch(e){
-      btn.disabled=false; btn.textContent='Try again';
-      bar.querySelector('span').textContent='Could not send ('+e.message+'). Check your internet and try again, or email the file to joe@localprosolutions.com.';
-    }
-  });
-  try{ if(localStorage.getItem('stj-sent')){ bar.querySelector('span').textContent='Already sent to Joey.'; btn.textContent='Sent'; btn.disabled=true; btn.style.background='#0f766e'; btn.style.color='#fff'; } }catch(e){}
+  // The booking link comes from config.json in the project (BOOKING_URL). Until Joey sets it, the button emails him instead.
+  var BOOKING_URL="REPLACE_WITH_BOOKING_URL";
+  var UPLOAD='https://svivkeuiydxloyyrcrna.supabase.co/functions/v1/audit-upload';
+  var KEY='stj-sent:'+location.pathname+':'+document.title;
+  function wireBooking(){
+    var ok=/^https?:\/\//.test(BOOKING_URL);
+    document.querySelectorAll('[data-book-joey]').forEach(function(a){
+      if(ok){a.href=BOOKING_URL;a.target='_blank';a.rel='noopener';}
+      else{a.href='mailto:joe@localprosolutions.com?subject='+encodeURIComponent('Book a call with Joey');a.textContent='Email Joey to book a call';}
+    });
+  }
+  function addLinkToPrompt(url){
+    // If the page has the interview block, put the saved-report link in it so the interview can read the report.
+    var p=document.getElementById('interview-prompt');
+    if(p && p.textContent.indexOf(url)<0){ p.textContent=p.textContent.replace(/\s*$/,'')+'\n\nMy audit is saved here: '+url+'findings.json and '+url+'report.html'; }
+  }
+  function markSent(msg,url){
+    var btn=document.getElementById('stj-btn');
+    document.getElementById('stj-msg').textContent=msg;
+    btn.textContent='Sent'; btn.disabled=true; btn.style.background='#0f766e'; btn.style.color='#fff';
+    if(url) addLinkToPrompt(url);
+  }
+  function start(){
+    wireBooking();
+    var btn=document.getElementById('stj-btn');
+    if(!btn) return;
+    try{ var prev=localStorage.getItem(KEY); if(prev){ markSent('Already sent to Joey.', prev); } }catch(e){}
+    btn.addEventListener('click', async function(){
+      btn.disabled=true; btn.textContent='Sending...';
+      try{
+        var fd=new FormData();
+        var findings=document.getElementById('stj-findings').textContent;
+        fd.append('findings.json', new Blob([findings],{type:'application/json'}), 'findings.json');
+        fd.append('report.html', new Blob(['<!doctype html>\n'+document.documentElement.outerHTML],{type:'text/html'}), 'report.html');
+        var r=await fetch(UPLOAD,{method:'POST',body:fd});
+        var j=await r.json();
+        if(!r.ok||!j.url) throw new Error(j.error||('error '+r.status));
+        markSent('Sent. Joey has it.', j.url);
+        try{localStorage.setItem(KEY,j.url);}catch(e){}
+      }catch(e){
+        btn.disabled=false; btn.textContent='Try again';
+        document.getElementById('stj-msg').textContent='That didn\'t go through ('+e.message+'). Check your internet and try again, or email this file to joe@localprosolutions.com.';
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
 })();
 </script>
+<!-- END SEND TO JOEY -->

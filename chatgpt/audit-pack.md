@@ -27,7 +27,7 @@ Read `summary.json` and `sample.md` fully. Then read `chats.jsonl`: all of it if
 
 Hour-of-day tallies are in UTC. Don't ask for a timezone. Guess it: assume the quietest 3-hour stretch is 3 to 6 am local, shift the clock until that lines up, and say in the report that times are a best guess.
 
-If there are fewer than 10 chats, say so plainly up front and keep the report short. Don't pad.
+If there are fewer than 10 chats, say so plainly up front, ask them these six questions in one message (short answers fine), and write the report from their answers plus the chats: 1) what's your business, where, how many people; 2) what have you used ChatGPT for so far; 3) how do new customers reach you; 4) when a call comes in and you can't pick up, what happens to it; 5) what office job eats the most of your week; 6) what do you wish you could hand to someone else. Put "Built from your answers to six questions, not from a long chat history." under the title. Don't pad.
 
 ## Step 2 — Find what matters
 
@@ -117,7 +117,7 @@ Fill in the HTML template in the **Report template** section at the end of this 
 
 **7. Three things to do tonight.** The quick wins. Each: title, *why* (one line of evidence), *do this* (the paste-in block or steps, in a copy box).
 
-**8. Where this leaves you.** The close. Four parts, in this order:
+**8. Where this leaves you.** The close. Five parts, in this order:
 - *The glimpse* — one scene, as above.
 - *Your rung, restated* — one line. "Rung 1. Every chat starts from zero." They should recognize it from section 2.
 - *Tonight* — the ONE quick win to do first, and which rung it moves them to. Pick the one with the strongest evidence.
@@ -125,7 +125,9 @@ Fill in the HTML template in the **Report template** section at the end of this 
 
 > This report could only see what you've brought to AI so far. The stuff that eats your week that you've never thought to use AI for doesn't show up here. Twenty minutes of questions finds the rest.
 
-Then a single button or line for the next step. If a booking link or next-step command was given to you, use it. If not, leave the placeholder.
+- *Your roadmap* — three steps up, in order, each a few words plus one line on what they get back (hours or jobs). Goes in `{{ROADMAP_STEPS}}`. Step 1 is the first thing to fix in the business. For a trades or home-service business where calls bring the work, first check whether missed calls and slow replies are losing them jobs. If the chats point that way, step 1 is "Stop losing the calls you can't answer": every missed call gets a text back within a minute and the job gets booked. Plain words, no product names, no prices. Otherwise lead with the biggest real gap.
+
+The template already has a "Book a call with Joey" button. Leave it alone; its link is set in the template.
 
 ### Tone rules — these are not optional
 
@@ -153,7 +155,7 @@ Before you hand it over:
 4. Banned-word scan. None present.
 4b. Run the humanizer pass on every paragraph you wrote (the `humanizer` skill, if installed; otherwise its rules). Watch especially for: one-line closers that restate the point ("That's the real win."), not-X-but-Y framing, rows of fragments, forced lists of three, and dashes. No em dashes anywhere in the report.
 5. Nothing personal or about a named customer slipped through.
-6. The closer points to the interview, once, and nowhere else does the report sell anything.
+6. The only asks are at the very end: the interview block and the Book a call button. Nothing else in the report sells anything.
 
 ## Step 5 — Hand off
 
@@ -176,40 +178,69 @@ Read them and follow them exactly.
 I'm {name}, on rung {rung} of 4. Open with a one-line playback of what the audit found, then ask your first question. Don't explain the process.
 ```
 
-**5d. Put the Send-to-Joey bar at the top of the report.** Insert this right after `<body>` in report.html, exactly as written, with `{{FINDINGS_JSON}}` replaced by the contents of findings.json. It uploads the report to Joey when the person clicks it (your sandbox can't reach the internet, but their browser can).
+**5d. Put the Send-to-Joey bar at the top of the report.** Insert this right after `<body>` in report.html, exactly as written, with `{{FINDINGS_JSON}}` replaced by the contents of findings.json. It uploads the report to Joey when the person clicks it (your sandbox can't reach the internet, but their browser can), and it adds a Book a call with Joey button to the bar. Also give the interview block's `<pre>` the id `interview-prompt` (the template already does) so the saved-report link gets added to it after sending.
 
 ```html
-<!-- SEND TO JOEY: put this right after <body>. It posts this page and the findings to Joey's audit bucket when clicked. -->
-<div id="stj" style="position:sticky;top:0;z-index:50;background:#1b2430;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:Inter,system-ui,sans-serif">
-  <span style="font-size:14px;opacity:.85">Done reading? Send this report to Joey so he has it before you talk.</span>
-  <button id="stj-btn" type="button" style="background:#f5b400;color:#3d2e00;font-weight:700;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px">Send to Joey</button>
+<!-- SEND TO JOEY: put this right after <body>. It posts this page and the findings to Joey's audit bucket when clicked, and wires up every "Book a call with Joey" button on the page. -->
+<div id="stj" style="position:sticky;top:0;z-index:50;background:#1b2430;color:#fff;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-family:Inter,system-ui,sans-serif">
+  <span id="stj-msg" style="font-size:14px;opacity:.85">Done reading? Send this to Joey so he has it before you talk.</span>
+  <span style="display:flex;gap:8px;flex-wrap:wrap">
+    <button id="stj-btn" type="button" style="background:#f5b400;color:#3d2e00;font-weight:700;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px">Send to Joey</button>
+    <a data-book-joey href="#" style="background:#fff;color:#1b2430;font-weight:700;border-radius:10px;padding:10px 16px;font-size:14px;text-decoration:none">Book a call with Joey</a>
+  </span>
 </div>
 <script id="stj-findings" type="application/json">{{FINDINGS_JSON}}</script>
 <script>
 (function(){
-  var btn=document.getElementById('stj-btn'), bar=document.getElementById('stj');
-  var URL='https://svivkeuiydxloyyrcrna.supabase.co/functions/v1/audit-upload';
-  btn.addEventListener('click', async function(){
-    btn.disabled=true; btn.textContent='Sending...';
-    try{
-      var fd=new FormData();
-      var findings=document.getElementById('stj-findings').textContent;
-      fd.append('findings.json', new Blob([findings],{type:'application/json'}), 'findings.json');
-      fd.append('report.html', new Blob(['<!doctype html>\n'+document.documentElement.outerHTML],{type:'text/html'}), 'report.html');
-      var r=await fetch(URL,{method:'POST',body:fd});
-      var j=await r.json();
-      if(!r.ok||!j.url) throw new Error(j.error||('HTTP '+r.status));
-      bar.querySelector('span').textContent='Sent. Joey has it.';
-      btn.textContent='Sent'; btn.style.background='#0f766e'; btn.style.color='#fff';
-      try{localStorage.setItem('stj-sent',j.url);}catch(e){}
-    }catch(e){
-      btn.disabled=false; btn.textContent='Try again';
-      bar.querySelector('span').textContent='Could not send ('+e.message+'). Check your internet and try again, or email the file to joe@localprosolutions.com.';
-    }
-  });
-  try{ if(localStorage.getItem('stj-sent')){ bar.querySelector('span').textContent='Already sent to Joey.'; btn.textContent='Sent'; btn.disabled=true; btn.style.background='#0f766e'; btn.style.color='#fff'; } }catch(e){}
+  // The booking link comes from config.json in the project (BOOKING_URL). Until Joey sets it, the button emails him instead.
+  var BOOKING_URL="REPLACE_WITH_BOOKING_URL";
+  var UPLOAD='https://svivkeuiydxloyyrcrna.supabase.co/functions/v1/audit-upload';
+  var KEY='stj-sent:'+location.pathname+':'+document.title;
+  function wireBooking(){
+    var ok=/^https?:\/\//.test(BOOKING_URL);
+    document.querySelectorAll('[data-book-joey]').forEach(function(a){
+      if(ok){a.href=BOOKING_URL;a.target='_blank';a.rel='noopener';}
+      else{a.href='mailto:joe@localprosolutions.com?subject='+encodeURIComponent('Book a call with Joey');a.textContent='Email Joey to book a call';}
+    });
+  }
+  function addLinkToPrompt(url){
+    // If the page has the interview block, put the saved-report link in it so the interview can read the report.
+    var p=document.getElementById('interview-prompt');
+    if(p && p.textContent.indexOf(url)<0){ p.textContent=p.textContent.replace(/\s*$/,'')+'\n\nMy audit is saved here: '+url+'findings.json and '+url+'report.html'; }
+  }
+  function markSent(msg,url){
+    var btn=document.getElementById('stj-btn');
+    document.getElementById('stj-msg').textContent=msg;
+    btn.textContent='Sent'; btn.disabled=true; btn.style.background='#0f766e'; btn.style.color='#fff';
+    if(url) addLinkToPrompt(url);
+  }
+  function start(){
+    wireBooking();
+    var btn=document.getElementById('stj-btn');
+    if(!btn) return;
+    try{ var prev=localStorage.getItem(KEY); if(prev){ markSent('Already sent to Joey.', prev); } }catch(e){}
+    btn.addEventListener('click', async function(){
+      btn.disabled=true; btn.textContent='Sending...';
+      try{
+        var fd=new FormData();
+        var findings=document.getElementById('stj-findings').textContent;
+        fd.append('findings.json', new Blob([findings],{type:'application/json'}), 'findings.json');
+        fd.append('report.html', new Blob(['<!doctype html>\n'+document.documentElement.outerHTML],{type:'text/html'}), 'report.html');
+        var r=await fetch(UPLOAD,{method:'POST',body:fd});
+        var j=await r.json();
+        if(!r.ok||!j.url) throw new Error(j.error||('error '+r.status));
+        markSent('Sent. Joey has it.', j.url);
+        try{localStorage.setItem(KEY,j.url);}catch(e){}
+      }catch(e){
+        btn.disabled=false; btn.textContent='Try again';
+        document.getElementById('stj-msg').textContent='That didn\'t go through ('+e.message+'). Check your internet and try again, or email this file to joe@localprosolutions.com.';
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
 })();
 </script>
+<!-- END SEND TO JOEY -->
 ```
 
 **5e. Give them all three files to download** (report.html, findings.json, session.md) and say:
@@ -242,6 +273,14 @@ Writes to --out (default ./ai-standing-out):
   summary.json   counts and tallies (no AI needed)
   chats.jsonl    one line per chat: title, dates, source, messages [{who, text, when}]
   sample.md      a readable sample of the person's own messages, for the writer
+
+Claude Code folders: scheduled jobs, headless runs (claude -p), subagents and
+temp-folder sessions are skipped, and machine messages (task notifications,
+shell echoes, skill bodies, "Request interrupted" markers) are not counted as
+the person's words. The counts in summary.json say how many were skipped.
+
+ChatGPT exports: only the branch the person actually kept (current_node) is
+read, and hidden custom-instructions messages are not counted as theirs.
 
 Only the person's own messages are kept at full length. Assistant replies are
 trimmed to a short preview — the report is about how THEY use AI, not what AI said.
@@ -293,7 +332,28 @@ def text_of(content):
     if isinstance(content, dict):
         if "parts" in content: return text_of(content["parts"])
         if "text" in content: return str(content["text"])
+        return ""   # e.g. ChatGPT custom-instructions blocks: not something the person typed
     return str(content)
+
+# Messages that land in the log as "user" but were written by a machine, not the person.
+MACHINE_PREFIXES = (
+    "<task-notification", "<bash-input>", "<bash-stdout>", "<bash-stderr>",
+    "<local-command-stdout>", "<user-prompt-submit-hook>", "<command-message>",
+    "[Request interrupted", "Caveat: The messages below were generated",
+    "Base directory for this skill:", "This session is being continued from a previous conversation",
+)
+# First-message markers of a scheduled job or headless run (Claude Code). From the first real run.
+HEADLESS_MARKERS = (
+    "<scheduled-task", "running headless", "Print exactly", "RESULT: OK", "/insights",
+    "You are a subagent", "You are running as a scheduled",
+)
+# Claude Code project folders that are scratch space, not a person at a keyboard.
+TEMP_PROJECT_PREFIXES = ("-private-var-", "-private-tmp", "-tmp", "-var-folders-")
+HEADLESS_ENTRYPOINTS = {"sdk-cli", "sdk-ts", "sdk-py", "sdk"}
+
+def is_machine_text(t):
+    s = t.lstrip()
+    return s.startswith(MACHINE_PREFIXES)
 
 def clean_user(t):
     t = t.strip()
@@ -301,25 +361,43 @@ def clean_user(t):
     t = re.sub(r"<system-reminder>.*?</system-reminder>", "", t, flags=re.S)
     t = re.sub(r"<command-[a-z]+>.*?</command-[a-z]+>", "", t, flags=re.S)
     t = re.sub(r"<local-command-[a-z]+>.*?</local-command-[a-z]+>", "", t, flags=re.S)
-    return t.strip()[:MAX_USER_CHARS]
+    t = re.sub(r"\[Image #\d+\]", "", t)
+    t = t.strip()
+    if is_machine_text(t):
+        return ""
+    return t[:MAX_USER_CHARS]
 
 # ---------- readers: each yields dict(title, source, started, messages=[{who,text,when}]) ----------
 
+SKIPPED = collections.Counter()   # why chats were left out; reported in summary.json
+
 def read_claude_code(root: Path):
     for f in sorted(root.rglob("*.jsonl")):
-        msgs, tools, model = [], collections.Counter(), None
+        rel_parts = f.relative_to(root).parts
+        project = f.parent.name
+        # subagent transcripts live in a "subagents" folder next to the session; they're the AI talking to itself
+        if "subagents" in rel_parts or f.name.startswith("agent-"):
+            SKIPPED["subagent"] += 1; continue
+        top = rel_parts[0] if len(rel_parts) > 1 else project
+        if top.startswith(TEMP_PROJECT_PREFIXES):
+            SKIPPED["temp_folder"] += 1; continue
+        msgs, tools, model, headless = [], collections.Counter(), None, False
         with open(f, errors="ignore") as fh:
             for line in fh:
                 try: d = json.loads(line)
                 except Exception: continue
                 t = d.get("type")
                 if t not in ("user", "assistant"): continue
+                if d.get("isSidechain"): continue            # subagent turns inside a session
+                if str(d.get("entrypoint") or "") in HEADLESS_ENTRYPOINTS: headless = True
                 m = d.get("message") or {}
                 content = m.get("content")
                 # skip pure tool-result turns (they're plumbing, not the person talking)
                 if t == "user" and isinstance(content, list) and content and all(
                     isinstance(p, dict) and p.get("type") == "tool_result" for p in content):
                     continue
+                if t == "user" and (d.get("isMeta") or d.get("isCompactSummary")):
+                    continue                                   # injected by Claude Code, not typed
                 if t == "assistant" and isinstance(content, list):
                     for p in content:
                         if isinstance(p, dict) and p.get("type") == "tool_use":
@@ -329,12 +407,17 @@ def read_claude_code(root: Path):
                 txt = clean_user(txt) if t == "user" else txt.strip()[:ASSIST_PREVIEW]
                 if not txt: continue
                 msgs.append({"who": "me" if t == "user" else "ai", "text": txt, "when": iso(d.get("timestamp"))})
-        if not any(m["who"] == "me" for m in msgs): continue
+        if not any(m["who"] == "me" for m in msgs):
+            SKIPPED["no_typed_messages"] += 1; continue
         first_me = next(m["text"] for m in msgs if m["who"] == "me")
+        if headless:
+            SKIPPED["headless_run"] += 1; continue
+        if any(k.lower() in first_me[:2000].lower() for k in HEADLESS_MARKERS):
+            SKIPPED["scheduled_or_headless"] += 1; continue
         yield {
             "title": first_me[:80].replace("\n", " "),
             "source": "claude-code",
-            "project": f.parent.name,
+            "project": project,
             "started": next((m["when"] for m in msgs if m["when"]), None),
             "tools": dict(tools),
             "model": model,
@@ -361,25 +444,41 @@ def read_claude_ai(convs):
             "messages": msgs,
         }
 
+def _chatgpt_path(mapping, current):
+    """The messages on the branch the person actually kept, root first.
+    ChatGPT stores every edit and regenerate as a branch. current_node marks the one on screen;
+    walk from it up to the root. Older exports without current_node: walk down taking the last child."""
+    if current and current in mapping:
+        path, node, seen = [], current, set()
+        while node and node not in seen and node in mapping:
+            seen.add(node); path.append(node)
+            node = mapping[node].get("parent")
+        return list(reversed(path))
+    root = next((k for k, v in mapping.items() if v.get("parent") is None), None)
+    path, node, seen = [], root, set()
+    while node and node not in seen:
+        seen.add(node); path.append(node)
+        kids = (mapping.get(node) or {}).get("children") or []
+        node = kids[-1] if kids else None
+    return path
+
 def read_chatgpt(convs):
     for c in convs:
         mapping = c.get("mapping") or {}
-        # walk from root, always taking the LAST child (the active branch, usually)
-        root = next((k for k, v in mapping.items() if v.get("parent") is None), None)
-        msgs, node = [], root
-        seen = set()
-        while node and node not in seen:
-            seen.add(node)
-            v = mapping.get(node) or {}
-            m = v.get("message")
-            if m and m.get("author", {}).get("role") in ("user", "assistant"):
-                who = "me" if m["author"]["role"] == "user" else "ai"
-                txt = text_of(m.get("content"))
-                txt = clean_user(txt) if who == "me" else txt.strip()[:ASSIST_PREVIEW]
-                if txt:
-                    msgs.append({"who": who, "text": txt, "when": iso(m.get("create_time"))})
-            kids = v.get("children") or []
-            node = kids[-1] if kids else None
+        msgs = []
+        for node in _chatgpt_path(mapping, c.get("current_node")):
+            m = (mapping.get(node) or {}).get("message")
+            if not m or m.get("author", {}).get("role") not in ("user", "assistant"): continue
+            meta = m.get("metadata") or {}
+            ctype = (m.get("content") or {}).get("content_type")
+            # custom instructions and other hidden context ride along as "user" messages; they aren't typed
+            if meta.get("is_visually_hidden_from_conversation") or ctype in ("user_editable_context", "model_editable_context"):
+                continue
+            who = "me" if m["author"]["role"] == "user" else "ai"
+            txt = text_of(m.get("content"))
+            txt = clean_user(txt) if who == "me" else txt.strip()[:ASSIST_PREVIEW]
+            if txt:
+                msgs.append({"who": who, "text": txt, "when": iso(m.get("create_time"))})
         if not any(m["who"] == "me" for m in msgs): continue
         yield {
             "title": (c.get("title") or msgs[0]["text"][:80]).replace("\n", " "),
@@ -440,6 +539,11 @@ def tally(chats):
         for w in re.findall(r"[a-zA-Z]{4,}", (c["title"] + " " + c["messages"][0]["text"]).lower()):
             if w not in stop: words[w] += 1
     span = sorted(w for w in whens)
+    by_month = collections.defaultdict(collections.Counter)
+    for w in whens: by_month[w.strftime("%Y-%m")][w.hour] += 1
+    peak_by_month = {k: v.most_common(1)[0][0] for k, v in sorted(by_month.items())}
+    peaks = list(peak_by_month.values())
+    shift = any(abs(a - b) % 24 >= 5 and abs(a - b) % 24 <= 19 for a, b in zip(peaks, peaks[1:]))
     return {
         "chats": len(chats),
         "my_messages": len(me),
@@ -455,6 +559,9 @@ def tally(chats):
         "tools_used": dict(tools.most_common(15)),
         "common_words": dict(words.most_common(40)),
         "sources": dict(collections.Counter(c["source"] for c in chats)),
+        "busiest_hour_utc_by_month": peak_by_month,
+        "possible_timezone_change": shift,
+        "skipped_not_typed_by_person": dict(SKIPPED),
     }
 
 def write_sample(chats, out: Path):
@@ -490,11 +597,14 @@ def main():
     json.dump(summary, open(out / "summary.json", "w"), indent=2)
     write_sample(chats, out)
     print(f"Read {summary['chats']} chats ({summary['my_messages']} of your messages) from {src}.")
+    if SKIPPED:
+        print(f"Skipped {sum(SKIPPED.values())} sessions that weren't the person typing: {dict(SKIPPED)}")
+    if summary["possible_timezone_change"]:
+        print("Heads up: the busiest hour moves a lot between months. The person may have changed timezones.")
     print(f"Dates: {summary['first_chat']} to {summary['last_chat']}. Wrote {out}/summary.json, chats.jsonl, sample.md")
 
 if __name__ == "__main__":
     main()
-
 ```
 
 ---
@@ -675,19 +785,29 @@ details[open] .chev{transform:rotate(180deg)}
       <div><p class="text-xs font-semibold tracking-widest uppercase text-amber mb-2">Tonight</p><p class="text-white/85 leading-relaxed">{{CTA_TONIGHT}}</p></div>
       <div><p class="text-xs font-semibold tracking-widest uppercase text-amber mb-2">Then</p><p class="text-white/85 leading-relaxed">{{CTA_THEN}}</p></div>
     </div>
+    <div class="border-t border-white/15 pt-6">
+      <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-4">Your roadmap, three steps up</p>
+      <ol class="flex flex-col gap-4">
+        {{ROADMAP_STEPS}}
+      </ol>
+    </div>
     <p class="text-white/70 leading-relaxed border-t border-white/15 pt-6">{{CLOSER}}</p>
     <div>
       <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-3">To start the interview, copy this and paste it into Claude or ChatGPT</p>
       <div class="copybox relative bg-white/10 rounded-xl p-5 pr-14">
         <button type="button" data-copy data-copied="Copied" aria-label="Copy" class="absolute top-3 right-3 w-9 h-9 grid place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-white/90">{{INTERVIEW_PROMPT}}</pre>
+        <pre id="interview-prompt" class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-white/90">{{INTERVIEW_PROMPT}}</pre>
       </div>
       <p class="text-sm text-white/50 mt-3">Works in a brand-new chat, on any computer, any day. Everything it needs is in the text.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-4">
+      <a data-book-joey href="#" class="bg-amber text-amber-ink font-display font-bold text-lg px-6 py-3 rounded-xl hover:brightness-95">Book a call with Joey</a>
+      <span class="text-sm text-white/60">Rather talk it through? Twenty minutes. He reads your report first.</span>
     </div>
   </div>
 </section>
 
-<footer class="pt-10 text-sm text-mute">Built from your own chats. Nothing here was shared with anyone. {{FOOTER_NOTE}}</footer>
+<footer class="pt-10 text-sm text-mute">Built from your own chats. When this report goes to Joey, it is saved at an unlisted web link so he can read it before you talk. Nobody can find it without that exact link. {{FOOTER_NOTE}}</footer>
 
 </main>
 
@@ -707,6 +827,10 @@ document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',a
   catch(e){const r=document.createRange();r.selectNodeContents(b.closest('.copybox').querySelector('pre'));getSelection().removeAllRanges();getSelection().addRange(r);b.textContent='Selected';}
   setTimeout(()=>b.innerHTML=orig,2500);
 }));
+// "Book a call with Joey" buttons. The link comes from config.json (BOOKING_URL); python3 chatgpt/build_pack.py stamps it here.
+// Until it's set, the buttons email Joey instead of pointing at a made-up link.
+(function(){var BOOKING_URL="REPLACE_WITH_BOOKING_URL";var ok=/^https?:\/\//.test(BOOKING_URL);
+document.querySelectorAll('[data-book-joey]').forEach(function(a){if(ok){a.href=BOOKING_URL;a.target='_blank';a.rel='noopener';}else{a.href='mailto:joe@localprosolutions.com?subject='+encodeURIComponent('Book a call with Joey');a.textContent='Email Joey to book a call';}});})();
 // animate bars once visible
 const bo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.style.width=e.target.dataset.w+'%';bo.unobserve(e.target);}}),{threshold:.3});
 document.querySelectorAll('.fill[data-w]').forEach(f=>{f.style.width='0%';bo.observe(f);});
@@ -745,7 +869,14 @@ QUICK_WINS (collapsed by default). Set once, works forever. Never a paste-every-
     <span class="self-start text-xs font-semibold tracking-wider uppercase bg-teal-soft text-teal px-2.5 py-1 rounded-full">Set once</span>
   </div></details>
 
+ROADMAP_STEPS (three, in order). Step 1 is the first thing to fix in the business. For a trades or home-service
+business where calls bring the work, step 1 is usually "Stop losing the calls you can't answer" IF the chats or
+answers point that way (on jobs all day, voicemail, slow callbacks). Plain words, no product names, no prices.
+  <li class="flex gap-4"><span class="w-8 h-8 rounded-full grid place-items-center font-display font-bold bg-amber text-amber-ink shrink-0">{{n}}</span><div><p class="font-semibold text-white">{{step, a few words}}</p><p class="text-white/70 text-sm leading-relaxed">{{one line: what you get back, in hours or jobs}}</p></div></li>
+
 INTERVIEW_PROMPT: leave this slot alone. scripts/handoff.py fills it after upload.
+
+BOOKING: leave the data-book-joey button and the BOOKING_URL line alone. The link comes from config.json.
 
 RUNG slots. For the rung they're on:
   RUNGn_OPEN = "open" (starts expanded); RUNGn_RING = "here ring-2 ring-amber"
@@ -753,5 +884,4 @@ RUNG slots. For the rung they're on:
   RUNGn_YOU  = <span class="text-xs font-semibold tracking-wider uppercase bg-amber text-amber-ink px-2.5 py-1 rounded-full">You are here</span>
 For the others: RUNGn_OPEN = ""   RUNGn_RING = ""   RUNGn_DOT = "bg-line text-mute"   RUNGn_YOU = ""
 -->
-
 ```

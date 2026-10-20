@@ -1,0 +1,78 @@
+{
+  "example": true,
+  "date": "EXAMPLE",
+  "name": "Example Owner",
+  "business": "Example Heating & Plumbing (made up)",
+  "trade": "HVAC and plumbing",
+  "area": "Example City",
+  "team_size": "3 techs plus the owner and a part-time office helper",
+  "rung": 1,
+  "bundle_id": "",
+  "from_audit": true,
+  "intro": "This is an EXAMPLE of the page a real interview produces. Five things fit this made-up shop. Together they hand back about 9 to 16 hours a week. One the owner can set up tonight; the biggest ones need the phone and calendar hooked up.",
+  "facts": {
+    "leads": "Mostly phone calls from Google and repeat customers. Some web forms.",
+    "missed_calls": "About 6 to 10 calls a week go to voicemail while the owner is under a house. Callbacks happen at night.",
+    "scheduling": "Paper calendar in the truck and texts with the techs.",
+    "quoting": "Writes quotes at night from notes on his phone. About 5 a week.",
+    "follow_up": "Rarely follows up on quotes. Says he forgets.",
+    "reviews": "Asks for reviews when he remembers. Maybe once a month.",
+    "back_office": "Invoices in QuickBooks on Sunday nights. A few customers pay late.",
+    "tools": ["QuickBooks", "Google Calendar (barely)", "iPhone", "ChatGPT for quotes"],
+    "team": "3 techs, 1 part-time office helper",
+    "hates": "Sunday night invoices and calling people back at 9 pm."
+  },
+  "opportunities": [
+    {
+      "name": "Missed-call text back",
+      "description": "Every call you can't pick up gets a text back within a minute, asks what they need, and offers a time.",
+      "why": "EXAMPLE: The owner said 6 to 10 calls a week go to voicemail while he's on a job, and he calls back at night. Some of those people have already booked someone else.",
+      "looks_like": "A homeowner calls about a dead water heater at 10 am. Before they can dial the next company, they get a text from the shop, answer two questions, and pick a slot.",
+      "what_it_takes": ["The business phone number", "A short list of services and service area", "About an afternoon of setup with help, then it runs on its own"],
+      "hours_low": 3, "hours_high": 5, "hours_is_estimate": false,
+      "effort": "hookup", "confidence": "high",
+      "top_reason": "The calls you miss are the jobs you lose. This catches them."
+    },
+    {
+      "name": "Quote follow-up",
+      "description": "Two days after a quote goes out, a friendly check-in goes to the customer in your words.",
+      "why": "EXAMPLE: About 5 quotes a week, and the owner said he rarely follows up because he forgets.",
+      "looks_like": "Thursday's quote gets a short text Saturday morning. The customer replies with a question instead of going quiet.",
+      "what_it_takes": ["Where your quotes live now", "Your usual follow-up wording", "Hooked to your texts or email"],
+      "hours_low": 2, "hours_high": 4, "hours_is_estimate": true,
+      "effort": "hookup", "confidence": "medium",
+      "top_reason": "Quotes nobody follows up on are money left on the table."
+    },
+    {
+      "name": "Invoice chaser",
+      "description": "Invoices go out when the job closes, and late ones get polite reminders on a schedule.",
+      "why": "EXAMPLE: Sunday nights go to QuickBooks invoices, and a few customers pay late every month.",
+      "looks_like": "Job closes Friday, invoice goes out Friday. Day 7, a friendly nudge. Day 14, a firmer one. Sunday night is free.",
+      "what_it_takes": ["QuickBooks connected", "Your reminder wording", "Set up with help"],
+      "hours_low": 2, "hours_high": 3, "hours_is_estimate": false,
+      "effort": "hookup", "confidence": "high",
+      "top_reason": "Gets Sunday night back."
+    },
+    {
+      "name": "Review request after every job",
+      "description": "The morning after a job, the customer gets a thank-you text with your Google review link.",
+      "why": "EXAMPLE: The owner asks for reviews about once a month, when he remembers.",
+      "looks_like": "Every finished job gets the same short thank-you the next morning. Reviews come in every week instead of now and then.",
+      "what_it_takes": ["Your Google review link", "A short thank-you in your words", "An afternoon with a little help"],
+      "hours_low": 1, "hours_high": 2, "hours_is_estimate": true,
+      "effort": "afternoon", "confidence": "medium",
+      "top_reason": "More reviews means more calls from Google."
+    },
+    {
+      "name": "Your business saved in ChatGPT",
+      "description": "Put your services, prices, area, and how you talk into ChatGPT's custom instructions once, so quotes come out right the first time.",
+      "why": "EXAMPLE: The audit found the owner re-explaining his business at the start of most quote chats.",
+      "looks_like": "He opens a new chat, types 'quote for a 50 gallon water heater swap, the Smith job,' and gets a draft in his own words.",
+      "what_it_takes": ["About ten minutes in ChatGPT settings, tonight, on your own"],
+      "hours_low": 1, "hours_high": 2, "hours_is_estimate": true,
+      "effort": "tonight", "confidence": "high",
+      "top_reason": "Ten minutes tonight, and every quote chat starts already knowing you."
+    }
+  ],
+  "closer": "EXAMPLE: The top three need the phone, texts, and QuickBooks working together. That's a setup job, not something to paste in. On a twenty-minute call, Joey goes over these and what it takes to get them running."
+}

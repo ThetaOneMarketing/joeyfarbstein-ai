@@ -14,147 +14,350 @@ if (window.tailwind) tailwind.config = { theme: { extend: {
 }}}
 </script>
 <style>
-/* Layout: same paper as the audit report. One card per agent, ranked. Two meters and an effort tag on each. Details open on tap. */
+/* Same paper as the audit report. One card per opportunity, ranked by hours back. The page is drawn from the
+   JSON in <script id="opps-data"> below, so the interview only has to write that one block (or run
+   scripts/build_opportunities.py, which does it for you). */
 html{scroll-behavior:smooth}
-body{background:#f3f4f6;color:#1b2430}
+body{background:#f3f4f6;color:#1b2430;font-family:Inter,system-ui,sans-serif}
 .fill{transition:width .7s ease}
 details summary{list-style:none;cursor:pointer}
 details summary::-webkit-details-marker{display:none}
 details[open] .chev{transform:rotate(180deg)}
 .chev{transition:transform .2s}
-.reveal{opacity:1;transform:none;transition:opacity .5s ease,transform .5s ease}
-.reveal.pending{opacity:0;transform:translateY(12px)}
 .rank{font-variant-numeric:tabular-nums}
-@media (prefers-reduced-motion:reduce){.reveal,.fill,.chev{transition:none}.reveal.pending{opacity:1;transform:none}}
+.price-placeholder{border:1.5px dashed #c7ccd3}
+@media (prefers-reduced-motion:reduce){.fill,.chev{transition:none}}
 </style>
 </head>
 <body class="font-sans antialiased">
 
+<!-- SEND TO JOEY bar for this page. Sends this page plus the interview results into the same audit bundle. -->
+<div id="stj" class="sticky top-0 z-50 bg-ink text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+  <span id="stj-msg" class="text-sm text-white/85">Send this page to Joey so he has it before you talk.</span>
+  <span class="flex flex-wrap gap-2">
+    <button id="stj-btn" type="button" class="bg-amber text-amber-ink font-bold rounded-xl px-4 py-2.5 text-sm">Send to Joey</button>
+    <a data-book-joey href="#" class="bg-white text-ink font-bold rounded-xl px-4 py-2.5 text-sm">Book a call with Joey</a>
+  </span>
+</div>
+
+<div id="example-banner" class="hidden bg-amber-soft border-b-2 border-amber text-amber-ink">
+  <div class="max-w-3xl mx-auto px-5 py-4 text-sm"><span class="font-display font-extrabold tracking-widest uppercase mr-2">Example</span>This page is filled with a made-up business to show the layout. None of it is a real client, and the hours are examples.</div>
+</div>
+
 <main class="max-w-3xl mx-auto px-5 pb-32">
 
-<header class="pt-20 pb-20">
-  <p class="text-xs font-semibold tracking-widest uppercase text-mute mb-5">Oct 13, 2026 · After your audit and interview</p>
-  <h1 class="font-display font-extrabold text-5xl sm:text-6xl leading-none tracking-tight mb-6">What AI could run for you</h1>
-  <p class="text-lg text-mute max-w-xl">Six things that fit Sample Roofing Co., ranked by how many hours a week they hand back. Two you can do yourself. The big ones need your tools hooked up, and that's what the call is for.</p>
+<noscript><p class="pt-16 text-lg">This page needs JavaScript to show your results. Open it in Chrome, Safari, or Edge.</p></noscript>
+<p id="not-filled" class="hidden pt-16 text-lg">This page hasn't been filled in yet. The interview fills it from your answers.</p>
+
+<div id="page" class="hidden">
+<header class="pt-16 pb-16">
+  <p class="text-xs font-semibold tracking-widest uppercase text-mute mb-5"><span data-f="date"></span> · After your audit and interview</p>
+  <h1 class="font-display font-extrabold text-5xl sm:text-6xl leading-none tracking-tight mb-4">What AI could run for you</h1>
+  <p class="font-display font-bold text-xl mb-6" data-f="business_line"></p>
+  <p class="text-lg text-mute max-w-xl" data-f="intro"></p>
   <div class="mt-12 flex flex-wrap gap-10">
-    <div><div class="font-display font-bold text-3xl rank">6</div><div class="text-xs uppercase tracking-wider text-mute mt-1">agents that fit</div></div>
-    <div><div class="font-display font-bold text-3xl rank">13–19</div><div class="text-xs uppercase tracking-wider text-mute mt-1">hours a week, all of them</div></div>
-    <div><div class="font-display font-bold text-3xl rank">1</div><div class="text-xs uppercase tracking-wider text-mute mt-1">you can do yourself</div></div>
+    <div><div class="font-display font-bold text-3xl rank" data-f="count"></div><div class="text-xs uppercase tracking-wider text-mute mt-1">things that fit</div></div>
+    <div><div class="font-display font-bold text-3xl rank" data-f="total_hours"></div><div class="text-xs uppercase tracking-wider text-mute mt-1">hours a week back, all of them</div></div>
+    <div><div class="font-display font-bold text-3xl rank" data-f="tonight_count"></div><div class="text-xs uppercase tracking-wider text-mute mt-1">you can do yourself</div></div>
   </div>
 </header>
 
-<section class="reveal pending pb-6">
+<section class="pb-6">
   <div class="bg-card rounded-2xl p-6 shadow-sm grid sm:grid-cols-3 gap-5 text-sm">
-    <div><p class="font-semibold mb-1">How sure we are</p><p class="text-mute">High means it showed up in your chats, you said it in the interview, and you put a number on it. Low means one mention.</p></div>
-    <div><p class="font-semibold mb-1">Hours back</p><p class="text-mute">A week, from what you told us. If you didn't give a number, it's our estimate and the card says so.</p></div>
-    <div><p class="font-semibold mb-1">What it takes</p><p class="text-mute"><span class="font-semibold text-teal">Tonight</span>: you, ten minutes. <span class="font-semibold text-amber-ink">An afternoon</span>: with a little help. <span class="font-semibold text-ink">Hook up your tools</span>: this is what the call is for.</p></div>
+    <div><p class="font-semibold mb-1">How sure we are</p><p class="text-mute">High means you told us about it and put a number on it. Low means it came up once.</p></div>
+    <div><p class="font-semibold mb-1">Hours back</p><p class="text-mute">A week, from what you told us. If you didn't give a number, it's our rough guess and the card says so.</p></div>
+    <div><p class="font-semibold mb-1">What it takes</p><p class="text-mute"><span class="font-semibold text-teal">Tonight</span>: you, about ten minutes. <span class="font-semibold text-amber-ink">An afternoon</span>: with a little help. <span class="font-semibold text-ink">Hook up your tools</span>: a setup job, and what the call is for.</p></div>
   </div>
 </section>
 
-<section class="reveal pending py-14">
+<section class="py-14">
   <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">Ranked by hours back</p>
   <h2 class="font-display font-bold text-3xl tracking-tight mb-10">Biggest first</h2>
-  <div class="flex flex-col gap-5">
-    <details class="bg-card rounded-2xl shadow-sm" open><summary class="p-6 sm:p-7"><div class="flex items-start gap-4"><span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">1</span><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-4"><div><h3 class="font-display font-bold text-xl leading-tight">Missed-call catcher</h3><p class="text-mute mt-1">Answers the phone when you're on a roof. Books the estimate, texts you the details.</p></div><svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></div>
-<div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end"><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">High</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="88"></div></div></div>
-<div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">6–8</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="100"></div></div></div>
-<span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full bg-ink text-white">Hook up your tools</span></div></div></div></summary>
-<div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5"><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">You told us you miss 4 or 5 calls a day on the job and call back maybe half. 19 of your chats were about code questions from the roof, so the phone's not in your hand. You put a number on it: "probably one job a week I never get back to."</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">Tuesday, 10 am. You're on a tear-off. The phone rings, a voice picks up, asks what's going on with their roof, gets the address, offers Thursday at 2 or Friday at 9. You get a text: Hendricks, 42 Elm, Thursday 2pm, leak over the garage. You never stopped working.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><p class="text-mute leading-relaxed">Your phone line gets forwarded to a service that answers with your script and writes into your calendar. Needs your calendar and your phone number hooked up. This one's the call.</p></div></div></details>
-<details class="bg-card rounded-2xl shadow-sm"><summary class="p-6 sm:p-7"><div class="flex items-start gap-4"><span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">2</span><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-4"><div><h3 class="font-display font-bold text-xl leading-tight">Invoice chaser</h3><p class="text-mute mt-1">Sends the invoice when the job closes and follows up on its own until it's paid.</p></div><svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></div>
-<div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end"><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">High</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="84"></div></div></div>
-<div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">3–4</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="50"></div></div></div>
-<span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full bg-ink text-white">Hook up your tools</span></div></div></div></summary>
-<div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5"><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">You said Tuesday nights are invoices, "two, three hours." You also said two customers from August still haven't paid and you haven't chased them because it's awkward. Invoices never showed up in your chats at all.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">Job closes Friday. Saturday morning the invoice goes out with the photos. Day 7, a friendly nudge. Day 14, a firmer one. Day 21, you get a text: "Carlson still hasn't paid, want me to call?" Tuesday night is yours again.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><p class="text-mute leading-relaxed">Hooks into whatever you invoice from now (you said QuickBooks) and your text or email. Needs those connected. Call.</p></div></div></details>
-<details class="bg-card rounded-2xl shadow-sm"><summary class="p-6 sm:p-7"><div class="flex items-start gap-4"><span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">3</span><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-4"><div><h3 class="font-display font-bold text-xl leading-tight">Follow-up texter</h3><p class="text-mute mt-1">The thank-you and review text, out on its own the morning after every job.</p></div><svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></div>
-<div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end"><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">High</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="92"></div></div></div>
-<div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">1–2</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="25"></div></div></div>
-<span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full bg-amber-soft text-amber-ink">An afternoon</span></div></div></div></summary>
-<div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5"><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">You wrote this text 23 times in four months. In the interview you said you send it "when I remember," which you guessed was about half the time. Reviews are how you get found, and you said that too.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">Crew finishes. Next morning at 8, the text goes out with their name and your review link. A week later, if they didn't leave one, a gentle second ask. You stop remembering because there's nothing to remember.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><p class="text-mute leading-relaxed">Needs to know when a job is done. Easiest: a one-tap "job done" shortcut on your phone that kicks it off. An afternoon to set up with help.</p></div></div></details>
-<details class="bg-card rounded-2xl shadow-sm"><summary class="p-6 sm:p-7"><div class="flex items-start gap-4"><span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">4</span><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-4"><div><h3 class="font-display font-bold text-xl leading-tight">Quote drafter</h3><p class="text-mute mt-1">Turns your walkthrough notes or a voice memo into a quote in your format, ready to send.</p></div><svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></div>
-<div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end"><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">Medium</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="66"></div></div></div>
-<div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">2–3 (est.)</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="37"></div></div></div>
-<span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full bg-amber-soft text-amber-ink">An afternoon</span></div></div></div></summary>
-<div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5"><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">44 of your chats were quotes, every one from a blank page. In the interview you said a quote takes "45 minutes if I'm being honest" and you do five or six a week. You weren't sure about the number, so this is an estimate.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">You walk the roof, talk into your phone for two minutes: squares, pitch, layers, the soft spot by the chimney. By the time you're in the truck there's a quote in your format with your pricing. You read it, change one thing, send.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><p class="text-mute leading-relaxed">A saved prompt with your real pricing and your quote format, plus a voice memo. You can get 80% of this tonight with the starter from your first report. The polished version is an afternoon.</p></div></div></details>
-<details class="bg-card rounded-2xl shadow-sm"><summary class="p-6 sm:p-7"><div class="flex items-start gap-4"><span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">5</span><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-4"><div><h3 class="font-display font-bold text-xl leading-tight">Who-I-am starter</h3><p class="text-mute mt-1">A paste-in block so every chat already knows your business.</p></div><svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></div>
-<div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end"><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">High</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="95"></div></div></div>
-<div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">1</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="12"></div></div></div>
-<span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full bg-teal-soft text-teal">Tonight</span></div></div></div></summary>
-<div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5"><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">You re-explained who you are 38 times. This was the first quick win in your audit and you said you hadn't tried it yet.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">Every new chat starts with it knowing you're a roofer in Spokane with a crew of four who talks plain. Answers come back right the first time instead of the third.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><p class="text-mute leading-relaxed">Copy the block from your first report. Paste it at the top of a chat. Tonight.</p></div></div></details>
-<details class="bg-card rounded-2xl shadow-sm"><summary class="p-6 sm:p-7"><div class="flex items-start gap-4"><span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">6</span><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-4"><div><h3 class="font-display font-bold text-xl leading-tight">Review responder</h3><p class="text-mute mt-1">Drafts a calm reply to every new Google review, good or bad, for you to approve.</p></div><svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></div>
-<div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end"><div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">Medium</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="58"></div></div></div>
-<div><div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">0.5–1 (est.)</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="12"></div></div></div>
-<span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full bg-ink text-white">Hook up your tools</span></div></div></div></summary>
-<div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5"><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">Four of your chats were bad-review replies and all four came out well. You said you "don't always get to the good ones." You didn't put a number on it.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">A review lands. Ten minutes later you get a text with a draft reply. You tap approve or fix a word. Every review gets answered within the hour, which Google likes.</p></div><div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><p class="text-mute leading-relaxed">Needs your Google Business Profile connected. Small job, but it's a hookup.</p></div></div></details>
-  </div>
+  <div id="cards" class="flex flex-col gap-5"></div>
 </section>
 
-<section class="reveal pending py-14 border-t border-line">
+<section class="py-14 border-t border-line">
   <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">Where this leaves you</p>
   <div class="bg-ink text-white rounded-2xl p-8 sm:p-10 flex flex-col gap-8">
     <div>
-      <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-3">The three I'd build first</p>
-      <ol class="flex flex-col gap-3 text-lg">
-        <li class="flex gap-3"><span class="text-amber font-display font-bold">1</span><span>Missed-call catcher. One lost job a week is the most expensive thing on this list.</span></li><li class="flex gap-3"><span class="text-amber font-display font-bold">2</span><span>Invoice chaser. Gets you Tuesday nights back and the two August invoices paid.</span></li><li class="flex gap-3"><span class="text-amber font-display font-bold">3</span><span>Follow-up texter. Cheapest to set up, and reviews are how you get found.</span></li>
-      </ol>
+      <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-3">The three I'd start with</p>
+      <ol id="top-three" class="flex flex-col gap-3 text-lg"></ol>
     </div>
-    <p class="text-white/80 leading-relaxed border-t border-white/15 pt-6">The first two need your phone, calendar, and QuickBooks talking to each other. That's a setup job, not a paste-in. Twenty minutes to go over these three and what it takes to build them.</p>
-    <a href="https://calendly.com/joeyfarbstein" class="self-start bg-amber text-amber-ink font-display font-bold text-lg px-6 py-3 rounded-xl hover:brightness-95">Book 20 minutes with Joey</a>
-    <p class="text-sm text-white/50">Your audit, interview, and this page are already attached. He'll have read them before you talk.</p>
+    <p class="text-white/80 leading-relaxed border-t border-white/15 pt-6" data-f="closer"></p>
+    <a data-book-joey href="#" class="self-start bg-amber text-amber-ink font-display font-bold text-lg px-6 py-3 rounded-xl hover:brightness-95">Book a call with Joey</a>
+    <p class="text-sm text-white/50">Send this page to Joey first (the button at the top) and he'll have read it before you talk.</p>
   </div>
 </section>
 
-<footer class="pt-10 text-sm text-mute">Built from your own chats and your own answers. This sample is filled with made-up example data to show the layout.</footer>
+<footer class="pt-10 text-sm text-mute">Built from your own answers<span data-f="footer_from_audit"></span>. Prices aren't on this page on purpose: Joey goes over them on the call.</footer>
+</div>
 
 </main>
 
+<!-- The interview writes the results here as JSON. Shape: see the comment at the bottom of this file. -->
+<script id="opps-data" type="application/json">{
+  "example": true,
+  "date": "EXAMPLE",
+  "name": "Example Owner",
+  "business": "Example Heating & Plumbing (made up)",
+  "trade": "HVAC and plumbing",
+  "area": "Example City",
+  "team_size": "3 techs plus the owner and a part-time office helper",
+  "rung": 1,
+  "bundle_id": "",
+  "from_audit": true,
+  "intro": "This is an EXAMPLE of the page a real interview produces. Five things fit this made-up shop. Together they hand back about 9 to 16 hours a week. One the owner can set up tonight; the biggest ones need the phone and calendar hooked up.",
+  "facts": {
+    "leads": "Mostly phone calls from Google and repeat customers. Some web forms.",
+    "missed_calls": "About 6 to 10 calls a week go to voicemail while the owner is under a house. Callbacks happen at night.",
+    "scheduling": "Paper calendar in the truck and texts with the techs.",
+    "quoting": "Writes quotes at night from notes on his phone. About 5 a week.",
+    "follow_up": "Rarely follows up on quotes. Says he forgets.",
+    "reviews": "Asks for reviews when he remembers. Maybe once a month.",
+    "back_office": "Invoices in QuickBooks on Sunday nights. A few customers pay late.",
+    "tools": [
+      "QuickBooks",
+      "Google Calendar (barely)",
+      "iPhone",
+      "ChatGPT for quotes"
+    ],
+    "team": "3 techs, 1 part-time office helper",
+    "hates": "Sunday night invoices and calling people back at 9 pm."
+  },
+  "opportunities": [
+    {
+      "name": "Missed-call text back",
+      "description": "Every call you can't pick up gets a text back within a minute, asks what they need, and offers a time.",
+      "why": "EXAMPLE: The owner said 6 to 10 calls a week go to voicemail while he's on a job, and he calls back at night. Some of those people have already booked someone else.",
+      "looks_like": "A homeowner calls about a dead water heater at 10 am. Before they can dial the next company, they get a text from the shop, answer two questions, and pick a slot.",
+      "what_it_takes": [
+        "The business phone number",
+        "A short list of services and service area",
+        "About an afternoon of setup with help, then it runs on its own"
+      ],
+      "hours_low": 3,
+      "hours_high": 5,
+      "hours_is_estimate": false,
+      "effort": "hookup",
+      "confidence": "high",
+      "top_reason": "The calls you miss are the jobs you lose. This catches them.",
+      "rank": 1
+    },
+    {
+      "name": "Quote follow-up",
+      "description": "Two days after a quote goes out, a friendly check-in goes to the customer in your words.",
+      "why": "EXAMPLE: About 5 quotes a week, and the owner said he rarely follows up because he forgets.",
+      "looks_like": "Thursday's quote gets a short text Saturday morning. The customer replies with a question instead of going quiet.",
+      "what_it_takes": [
+        "Where your quotes live now",
+        "Your usual follow-up wording",
+        "Hooked to your texts or email"
+      ],
+      "hours_low": 2,
+      "hours_high": 4,
+      "hours_is_estimate": true,
+      "effort": "hookup",
+      "confidence": "medium",
+      "top_reason": "Quotes nobody follows up on are money left on the table.",
+      "rank": 2
+    },
+    {
+      "name": "Invoice chaser",
+      "description": "Invoices go out when the job closes, and late ones get polite reminders on a schedule.",
+      "why": "EXAMPLE: Sunday nights go to QuickBooks invoices, and a few customers pay late every month.",
+      "looks_like": "Job closes Friday, invoice goes out Friday. Day 7, a friendly nudge. Day 14, a firmer one. Sunday night is free.",
+      "what_it_takes": [
+        "QuickBooks connected",
+        "Your reminder wording",
+        "Set up with help"
+      ],
+      "hours_low": 2,
+      "hours_high": 3,
+      "hours_is_estimate": false,
+      "effort": "hookup",
+      "confidence": "high",
+      "top_reason": "Gets Sunday night back.",
+      "rank": 3
+    },
+    {
+      "name": "Your business saved in ChatGPT",
+      "description": "Put your services, prices, area, and how you talk into ChatGPT's custom instructions once, so quotes come out right the first time.",
+      "why": "EXAMPLE: The audit found the owner re-explaining his business at the start of most quote chats.",
+      "looks_like": "He opens a new chat, types 'quote for a 50 gallon water heater swap, the Smith job,' and gets a draft in his own words.",
+      "what_it_takes": [
+        "About ten minutes in ChatGPT settings, tonight, on your own"
+      ],
+      "hours_low": 1,
+      "hours_high": 2,
+      "hours_is_estimate": true,
+      "effort": "tonight",
+      "confidence": "high",
+      "top_reason": "Ten minutes tonight, and every quote chat starts already knowing you.",
+      "rank": 4
+    },
+    {
+      "name": "Review request after every job",
+      "description": "The morning after a job, the customer gets a thank-you text with your Google review link.",
+      "why": "EXAMPLE: The owner asks for reviews about once a month, when he remembers.",
+      "looks_like": "Every finished job gets the same short thank-you the next morning. Reviews come in every week instead of now and then.",
+      "what_it_takes": [
+        "Your Google review link",
+        "A short thank-you in your words",
+        "An afternoon with a little help"
+      ],
+      "hours_low": 1,
+      "hours_high": 2,
+      "hours_is_estimate": true,
+      "effort": "afternoon",
+      "confidence": "medium",
+      "top_reason": "More reviews means more calls from Google.",
+      "rank": 5
+    }
+  ],
+  "closer": "EXAMPLE: The top three need the phone, texts, and QuickBooks working together. That's a setup job, not something to paste in. On a twenty-minute call, Joey goes over these and what it takes to get them running."
+}</script>
+
 <script>
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('pending');io.unobserve(e.target);}}),{threshold:.08});
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-const bo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.style.width=e.target.dataset.w+'%';bo.unobserve(e.target);}}),{threshold:.3});
-document.querySelectorAll('.fill[data-w]').forEach(f=>{f.style.width='0%';bo.observe(f);});
+(function(){
+  // "Book a call with Joey" link. It comes from config.json (BOOKING_URL); python3 chatgpt/build_pack.py stamps it here.
+  // Until Joey sets it, the buttons email him instead of pointing at a made-up link.
+  var BOOKING_URL="REPLACE_WITH_BOOKING_URL";
+  var UPLOAD='https://svivkeuiydxloyyrcrna.supabase.co/functions/v1/audit-upload';
+  var EFFORT={tonight:['Tonight','bg-teal-soft text-teal',0],afternoon:['An afternoon','bg-amber-soft text-amber-ink',1],hookup:['Hook up your tools','bg-ink text-white',2]};
+  var SURE={high:['High',90],medium:['Medium',60],low:['Low',30]};
+
+  function el(tag, cls, text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+  function num(x){ x=Number(x); return isFinite(x)&&x>=0?x:0; }
+  function hoursText(o){ var lo=num(o.hours_low), hi=num(o.hours_high||o.hours_low); var t=(lo===hi)?String(lo):(lo+' to '+hi); return t+(o.hours_is_estimate?' (our guess)':''); }
+  function mid(o){ return (num(o.hours_low)+num(o.hours_high||o.hours_low))/2; }
+
+  var data=null;
+  try{ data=JSON.parse(document.getElementById('opps-data').textContent); }catch(e){}
+  if(!data||!Array.isArray(data.opportunities)||!data.opportunities.length){
+    document.getElementById('not-filled').classList.remove('hidden');
+  } else {
+    render(data);
+  }
+
+  function render(d){
+    if(d.example) document.getElementById('example-banner').classList.remove('hidden');
+    var ops=d.opportunities.slice().sort(function(a,b){ return (mid(b)-mid(a)) || ((EFFORT[a.effort]||[0,0,9])[2]-(EFFORT[b.effort]||[0,0,9])[2]); });
+    var top=Math.max.apply(null, ops.map(function(o){return num(o.hours_high||o.hours_low);}).concat([1]));
+    var lo=ops.reduce(function(s,o){return s+num(o.hours_low);},0), hi=ops.reduce(function(s,o){return s+num(o.hours_high||o.hours_low);},0);
+    var fields={
+      date:d.date||'', intro:d.intro||'', closer:d.closer||'',
+      business_line:[d.business||d.name, d.trade, d.area].filter(Boolean).join(' · '),
+      count:String(ops.length),
+      total_hours:(lo===hi?String(lo):lo+' to '+hi),
+      tonight_count:String(ops.filter(function(o){return o.effort==='tonight';}).length),
+      footer_from_audit:d.from_audit?' and your AI audit':''
+    };
+    document.querySelectorAll('[data-f]').forEach(function(n){ var k=n.getAttribute('data-f'); if(k in fields) n.textContent=fields[k]; });
+
+    var cards=document.getElementById('cards'); cards.innerHTML='';   // a saved copy re-renders cleanly
+    ops.forEach(function(o,i){
+      var ef=EFFORT[o.effort]||EFFORT.hookup, su=SURE[String(o.confidence||'').toLowerCase()]||SURE.medium;
+      var det=el('details','bg-card rounded-2xl shadow-sm'); if(i===0) det.open=true;
+      var sum=el('summary','p-6 sm:p-7'), row=el('div','flex items-start gap-4');
+      row.appendChild(el('span','rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0',String(i+1)));
+      var body=el('div','flex-1 min-w-0'), head=el('div','flex items-start justify-between gap-4'), ttl=el('div');
+      ttl.appendChild(el('h3','font-display font-bold text-xl leading-tight',o.name||''));
+      ttl.appendChild(el('p','text-mute mt-1',o.description||''));
+      head.appendChild(ttl);
+      head.insertAdjacentHTML('beforeend','<svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg>');
+      body.appendChild(head);
+      var grid=el('div','grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end');
+      function meter(label,val,pct,color){ var w=el('div'), top=el('div','flex items-baseline justify-between mb-1.5'); top.appendChild(el('span','text-xs font-semibold tracking-wider uppercase text-mute',label)); top.appendChild(el('span','text-sm font-semibold rank',val)); w.appendChild(top); var bar=el('div','h-2 rounded-full bg-line overflow-hidden'), f=el('div','fill h-full rounded-full '+color); f.style.width=Math.max(4,Math.min(100,pct))+'%'; bar.appendChild(f); w.appendChild(bar); return w; }
+      grid.appendChild(meter('How sure',su[0],su[1],'bg-teal'));
+      grid.appendChild(meter('Hours back a week',hoursText(o),num(o.hours_high||o.hours_low)/top*100,'bg-amber'));
+      grid.appendChild(el('span','justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full '+ef[1],ef[0]));
+      body.appendChild(grid); row.appendChild(body); sum.appendChild(row); det.appendChild(sum);
+      var more=el('div','px-6 sm:px-7 pb-7 sm:pl-[5rem] flex flex-col gap-5');
+      function part(label,text){ if(!text) return; var w=el('div'); w.appendChild(el('p','text-xs font-semibold tracking-widest uppercase text-teal mb-1',label)); w.appendChild(el('p','text-mute leading-relaxed',text)); more.appendChild(w); }
+      part('Why we think it fits',o.why);
+      part('What it looks like running',o.looks_like);
+      if(Array.isArray(o.what_it_takes)&&o.what_it_takes.length){ var w=el('div'); w.appendChild(el('p','text-xs font-semibold tracking-widest uppercase text-teal mb-1','What it takes')); var ul=el('ul','list-disc pl-5 text-mute leading-relaxed flex flex-col gap-1'); o.what_it_takes.forEach(function(t){ul.appendChild(el('li',null,t));}); w.appendChild(ul); more.appendChild(w); }
+      // PRICE PLACEHOLDER: Joey sets prices. The interview never writes a price; this always shows the placeholder.
+      var pr=el('div','price-placeholder rounded-xl px-4 py-3 text-sm flex flex-wrap gap-x-2'); pr.setAttribute('data-price-placeholder','');
+      pr.appendChild(el('span','font-semibold','Price:')); pr.appendChild(el('span','text-mute','Not set yet. Joey goes over it on the call.'));
+      more.appendChild(pr);
+      det.appendChild(more); cards.appendChild(det);
+    });
+
+    var ol=document.getElementById('top-three'); ol.innerHTML='';
+    ops.slice(0,3).forEach(function(o,i){ var li=el('li','flex gap-3'); li.appendChild(el('span','text-amber font-display font-bold',String(i+1))); li.appendChild(el('span',null,(o.name||'')+(o.top_reason?'. '+o.top_reason:''))); ol.appendChild(li); });
+    document.getElementById('page').classList.remove('hidden');
+  }
+
+  // booking buttons
+  var ok=/^https?:\/\//.test(BOOKING_URL);
+  document.querySelectorAll('[data-book-joey]').forEach(function(a){
+    if(ok){a.href=BOOKING_URL;a.target='_blank';a.rel='noopener';}
+    else{a.href='mailto:joe@localprosolutions.com?subject='+encodeURIComponent('Book a call with Joey');a.textContent='Email Joey to book a call';}
+  });
+
+  // send to Joey
+  var btn=document.getElementById('stj-btn'), msg=document.getElementById('stj-msg');
+  var KEY='stj-opps-sent:'+location.pathname;
+  function sent(t){ msg.textContent=t; btn.textContent='Sent'; btn.disabled=true; btn.className='bg-teal text-white font-bold rounded-xl px-4 py-2.5 text-sm'; }
+  if(!data||(data&&data.example)){ btn.disabled=true; btn.title='Example page'; btn.style.opacity='.5'; msg.textContent=data&&data.example?'Example page. Nothing to send.':msg.textContent; }
+  try{ if(localStorage.getItem(KEY)) sent('Already sent to Joey.'); }catch(e){}
+  btn.addEventListener('click', async function(){
+    if(!data||data.example) return;
+    btn.disabled=true; btn.textContent='Sending...';
+    try{
+      var fd=new FormData();
+      var id=String(data.bundle_id||'').trim();
+      if(/^[a-z0-9]{12}$/.test(id)) fd.append('id',id);
+      else fd.append('findings.json', new Blob([JSON.stringify(data.findings||{source:'interview-only',name:data.name||'',business:data.business||''},null,2)],{type:'application/json'}),'findings.json');
+      fd.append('profile.json', new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'profile.json');
+      if(data.interview_md) fd.append('interview.md', new Blob([data.interview_md],{type:'text/markdown'}),'interview.md');
+      fd.append('opportunities.html', new Blob(['<!doctype html>\n'+document.documentElement.outerHTML],{type:'text/html'}),'opportunities.html');
+      var r=await fetch(UPLOAD,{method:'POST',body:fd}); var j=await r.json();
+      if(!r.ok||!j.url){ if(/exist/i.test(j.error||'')){ sent('Already sent to Joey.'); return; } throw new Error(j.error||('error '+r.status)); }
+      sent('Sent. Joey has it.'); try{localStorage.setItem(KEY,j.url);}catch(e){}
+    }catch(e){
+      btn.disabled=false; btn.textContent='Try again';
+      msg.textContent='That didn\'t go through ('+e.message+'). Check your internet and try again, or email this file to joe@localprosolutions.com.';
+    }
+  });
+})();
 </script>
 </body>
 </html>
 <!--
-AGENT_CARDS, one per agent, ranked by hours back (highest first). effort is one of: tonight | afternoon | hookup.
+HOW TO FILL THIS PAGE
+Easiest: write profile.json (shape below) and run
+    python3 scripts/build_opportunities.py --out ai-standing-out
+It checks the data, ranks it, and writes ai-standing-out/opportunities.html.
+No shell? Replace {{OPPORTUNITIES_JSON}} above with the same JSON. Escape "</" as "<\/" inside strings.
 
-  <details class="bg-card rounded-2xl shadow-sm" {{open on the top card only}}>
-    <summary class="p-6 sm:p-7">
-      <div class="flex items-start gap-4">
-        <span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">{{rank}}</span>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h3 class="font-display font-bold text-xl leading-tight">{{name}}</h3>
-              <p class="text-mute mt-1">{{one line: what it does, in their words}}</p>
-            </div>
-            <svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg>
-          </div>
-          <div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end">
-            <div>
-              <div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">{{High|Medium|Low}}</span></div>
-              <div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="{{confidence 0-100}}"></div></div>
-            </div>
-            <div>
-              <div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">{{e.g. 3–5}}{{ " (est.)" if estimated }}</span></div>
-              <div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="{{hours as % of the top card's hours}}"></div></div>
-            </div>
-            <span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full
-              {{ tonight:  bg-teal-soft text-teal }}
-              {{ afternoon: bg-amber-soft text-amber-ink }}
-              {{ hookup:   bg-ink text-white }}">{{Tonight | An afternoon | Hook up your tools}}</span>
-          </div>
-        </div>
-      </div>
-    </summary>
-    <div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5">
-      <div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">{{evidence: cite the chat count, the interview quote, the number they gave}}</p></div>
-      <div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">{{two sentences, a scene, their business}}</p></div>
-      <div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><p class="text-mute leading-relaxed">{{plain: which of their tools get hooked up, or what they paste tonight}}</p></div>
-    </div>
-  </details>
-
-TOP_THREE: <li class="flex gap-3"><span class="text-amber font-display font-bold">1</span><span>{{name}}. {{one line why}}</span></li>
-
-BOOKING_URL: Joey's Calendly link. Leave as-is if not given.
+{
+  "example": false,                       true only for the sample page
+  "date": "Oct 20, 2026",
+  "name": "their name", "business": "business name", "trade": "HVAC", "area": "Boise, ID", "team_size": "4 plus me",
+  "rung": 1,
+  "bundle_id": "x7k2pq9d3m4n",            the 12 characters at the end of the audit link, if there was one; else ""
+  "from_audit": true,                      true if the audit report was loaded
+  "intro": "One or two sentences in their words: what fits, and how many hours it adds up to.",
+  "facts": { "leads": "...", "missed_calls": "...", "scheduling": "...", "quoting": "...", "follow_up": "...",
+             "reviews": "...", "back_office": "...", "tools": ["..."], "team": "...", "hates": "..." },
+  "opportunities": [
+    {
+      "name": "Missed-call text back",                 a few plain words
+      "description": "Every call you can't pick up gets a text back within a minute.",   one line, plain English
+      "why": "You said about 6 calls a week go to voicemail while you're on a job.",       their words, their numbers
+      "looks_like": "Two sentences: a scene from their business with it running.",
+      "what_it_takes": ["Your business phone number", "About an hour of setup with help"],
+      "hours_low": 2, "hours_high": 4,                  hours a week back
+      "hours_is_estimate": false,                       true if they didn't give a number and you worked it out
+      "effort": "tonight | afternoon | hookup",
+      "confidence": "high | medium | low",
+      "top_reason": "one short line for the 'three I'd start with' list"
+    }
+  ],
+  "closer": "Two or three sentences: what the top ones need and that the call is where they get set up.",
+  "interview_md": "optional: the interview notes, so Send to Joey can include them"
+}
+Never put a price anywhere. The card shows a price placeholder that Joey fills in on the call.
 -->
