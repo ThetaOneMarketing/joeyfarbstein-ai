@@ -148,8 +148,8 @@ details[open] .chev{transform:rotate(180deg)}
 <!-- 7 tonight -->
 <section id="s7" class="reveal pending py-20 border-t border-line">
   <p class="text-xs font-semibold tracking-widest uppercase text-amber-ink mb-3">7 · Three things to do tonight</p>
-  <h2 class="font-display font-bold text-3xl tracking-tight mb-3">Three small changes, free, about ten minutes each.</h2>
-  <p class="text-mute mb-10">All of them work in the app you already use.</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-3">Three things to set up once.</h2>
+  <p class="text-mute mb-10">Free, about ten minutes each, in the app you already use. Set it once and it works from then on.</p>
   <div class="flex flex-col gap-4">
     {{QUICK_WINS}}
   </div>
@@ -230,19 +230,14 @@ FRICTION_ITEMS (collapsed by default):
   <ul class="list-disc pl-5 text-sm text-mute flex flex-col gap-1"><li>{{example 1}}</li><li>{{example 2}}</li></ul>
   <div class="border-t border-line pt-4"><span class="text-xs font-semibold tracking-widest uppercase text-teal">Fix</span><p class="mt-1">{{one sentence}}</p></div></div></details>
 
-QUICK_WINS (collapsed by default):
+QUICK_WINS (collapsed by default). Set once, works forever. Never a paste-every-time prompt.
   <details class="bg-card rounded-2xl shadow-sm"><summary class="flex items-center justify-between gap-4 p-6"><div><span class="font-display font-bold text-lg block">{{title}}</span><span class="text-sm text-mute">Why: {{one line of evidence}}</span></div><svg class="chev w-5 h-5 text-mute shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></summary>
-  <div class="px-6 pb-7 flex flex-col gap-4"><p class="leading-relaxed">{{what to do}}</p>
-  <div class="copybox relative bg-paper rounded-xl p-5 pr-20"><button type="button" data-copy class="absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-lg bg-card border border-line hover:bg-line">Copy</button><pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed">{{paste-in text}}</pre></div></div></details>
-
-LADDER_NOW: 2 sentences. What rung they're on, in their terms, and what it costs them in hours or rewrites. Cite a count.
-LADDER_NEXT: 2 sentences. What the next rung up would change for THEM specifically. Tie to something you saw.
-LADDER_WHY: 1-2 sentences. Why this ladder is the whole point of the report. Plain.
-S3_SOWHAT / S4_SOWHAT / S5_SOWHAT / S6_SOWHAT: one or two sentences each, "so what does this mean for you". Always tie back to hours, money, or the ladder.
-
-CTA_RUNG_LINE: one line restating their rung in their terms. "Every chat starts from zero."
-CTA_TONIGHT: 1-2 sentences. The single quick win to do first, and which rung it gets them to.
-CTA_THEN: 1-2 sentences. The next step based on what the audit found: the interview, and what it goes looking for in THEIR business (name the gaps you couldn't see).
+  <div class="px-6 pb-7 flex flex-col gap-4">
+    <p class="leading-relaxed">{{what changes after, one or two sentences: "From now on, every chat already knows..."}}</p>
+    <p class="text-xs font-semibold tracking-widest uppercase text-teal">{{the install line: "Paste this into Claude Code and it sets it up" / "ChatGPT: Settings > Personalization > Custom instructions > paste"}}</p>
+    <div class="copybox relative bg-paper rounded-xl p-5 pr-20"><button type="button" data-copy class="absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-lg bg-card border border-line hover:bg-line">Copy</button><pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed">{{the block: a command, a file, a settings paste}}</pre></div>
+    <span class="self-start text-xs font-semibold tracking-wider uppercase bg-teal-soft text-teal px-2.5 py-1 rounded-full">Set once</span>
+  </div></details>
 
 INTERVIEW_PROMPT: leave this slot alone. scripts/handoff.py fills it after upload.
 

@@ -1,0 +1,31 @@
+<!-- SEND TO JOEY: put this right after <body>. It posts this page and the findings to Joey's audit bucket when clicked. -->
+<div id="stj" style="position:sticky;top:0;z-index:50;background:#1b2430;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:Inter,system-ui,sans-serif">
+  <span style="font-size:14px;opacity:.85">Done reading? Send this report to Joey so he has it before you talk.</span>
+  <button id="stj-btn" type="button" style="background:#f5b400;color:#3d2e00;font-weight:700;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px">Send to Joey</button>
+</div>
+<script id="stj-findings" type="application/json">{{FINDINGS_JSON}}</script>
+<script>
+(function(){
+  var btn=document.getElementById('stj-btn'), bar=document.getElementById('stj');
+  var URL='https://svivkeuiydxloyyrcrna.supabase.co/functions/v1/audit-upload';
+  btn.addEventListener('click', async function(){
+    btn.disabled=true; btn.textContent='Sending...';
+    try{
+      var fd=new FormData();
+      var findings=document.getElementById('stj-findings').textContent;
+      fd.append('findings.json', new Blob([findings],{type:'application/json'}), 'findings.json');
+      fd.append('report.html', new Blob(['<!doctype html>\n'+document.documentElement.outerHTML],{type:'text/html'}), 'report.html');
+      var r=await fetch(URL,{method:'POST',body:fd});
+      var j=await r.json();
+      if(!r.ok||!j.url) throw new Error(j.error||('HTTP '+r.status));
+      bar.querySelector('span').textContent='Sent. Joey has it.';
+      btn.textContent='Sent'; btn.style.background='#0f766e'; btn.style.color='#fff';
+      try{localStorage.setItem('stj-sent',j.url);}catch(e){}
+    }catch(e){
+      btn.disabled=false; btn.textContent='Try again';
+      bar.querySelector('span').textContent='Could not send ('+e.message+'). Check your internet and try again, or email the file to joe@localprosolutions.com.';
+    }
+  });
+  try{ if(localStorage.getItem('stj-sent')){ bar.querySelector('span').textContent='Already sent to Joey.'; btn.textContent='Sent'; btn.disabled=true; btn.style.background='#0f766e'; btn.style.color='#fff'; } }catch(e){}
+})();
+</script>
