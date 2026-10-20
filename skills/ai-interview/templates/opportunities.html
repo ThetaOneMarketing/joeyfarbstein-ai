@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What AI Could Run for You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+if (window.tailwind) tailwind.config = { theme: { extend: {
+  fontFamily: { sans: ['Inter','system-ui','sans-serif'], display: ['"Inter Tight"','Inter','system-ui','sans-serif'] },
+  colors: { ink:'#1b2430', mute:'#6b7785', line:'#e3e7ec', paper:'#f3f4f6', card:'#ffffff', teal:{DEFAULT:'#0f766e', soft:'#e6f4f2'}, amber:{DEFAULT:'#f5b400', ink:'#3d2e00', soft:'#fff5d6'} }
+}}}
+</script>
+<style>
+/* Layout: same paper as the audit report. One card per agent, ranked. Two meters and an effort tag on each. Details open on tap. */
+html{scroll-behavior:smooth}
+body{background:#f3f4f6;color:#1b2430}
+.fill{transition:width .7s ease}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+details[open] .chev{transform:rotate(180deg)}
+.chev{transition:transform .2s}
+.reveal{opacity:1;transform:none;transition:opacity .5s ease,transform .5s ease}
+.reveal.pending{opacity:0;transform:translateY(12px)}
+.rank{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.reveal,.fill,.chev{transition:none}.reveal.pending{opacity:1;transform:none}}
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<main class="max-w-3xl mx-auto px-5 pb-32">
+
+<header class="pt-20 pb-20">
+  <p class="text-xs font-semibold tracking-widest uppercase text-mute mb-5">{{DATE}} · After your audit and interview</p>
+  <h1 class="font-display font-extrabold text-5xl sm:text-6xl leading-none tracking-tight mb-6">What AI could run for you</h1>
+  <p class="text-lg text-mute max-w-xl">{{INTRO}}</p>
+  <div class="mt-12 flex flex-wrap gap-10">
+    <div><div class="font-display font-bold text-3xl rank">{{AGENT_COUNT}}</div><div class="text-xs uppercase tracking-wider text-mute mt-1">agents that fit</div></div>
+    <div><div class="font-display font-bold text-3xl rank">{{TOTAL_HOURS}}</div><div class="text-xs uppercase tracking-wider text-mute mt-1">hours a week, all of them</div></div>
+    <div><div class="font-display font-bold text-3xl rank">{{TONIGHT_COUNT}}</div><div class="text-xs uppercase tracking-wider text-mute mt-1">you can do yourself</div></div>
+  </div>
+</header>
+
+<section class="reveal pending pb-6">
+  <div class="bg-card rounded-2xl p-6 shadow-sm grid sm:grid-cols-3 gap-5 text-sm">
+    <div><p class="font-semibold mb-1">How sure we are</p><p class="text-mute">High means it showed up in your chats, you said it in the interview, and you put a number on it. Low means one mention.</p></div>
+    <div><p class="font-semibold mb-1">Hours back</p><p class="text-mute">A week, from what you told us. If you didn't give a number, it's our estimate and the card says so.</p></div>
+    <div><p class="font-semibold mb-1">What it takes</p><p class="text-mute"><span class="font-semibold text-teal">Tonight</span>: you, ten minutes. <span class="font-semibold text-amber-ink">An afternoon</span>: with a little help. <span class="font-semibold text-ink">Hook up your tools</span>: this is what the call is for.</p></div>
+  </div>
+</section>
+
+<section class="reveal pending py-14">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">Ranked by hours back</p>
+  <h2 class="font-display font-bold text-3xl tracking-tight mb-10">Biggest first</h2>
+  <div class="flex flex-col gap-5">
+    {{AGENT_CARDS}}
+  </div>
+</section>
+
+<section class="reveal pending py-14 border-t border-line">
+  <p class="text-xs font-semibold tracking-widest uppercase text-teal mb-3">Where this leaves you</p>
+  <div class="bg-ink text-white rounded-2xl p-8 sm:p-10 flex flex-col gap-8">
+    <div>
+      <p class="text-xs font-semibold tracking-widest uppercase text-amber mb-3">The three I'd build first</p>
+      <ol class="flex flex-col gap-3 text-lg">
+        {{TOP_THREE}}
+      </ol>
+    </div>
+    <p class="text-white/80 leading-relaxed border-t border-white/15 pt-6">{{CLOSER}}</p>
+    <a href="{{BOOKING_URL}}" class="self-start bg-amber text-amber-ink font-display font-bold text-lg px-6 py-3 rounded-xl hover:brightness-95">Book 20 minutes with Joey</a>
+    <p class="text-sm text-white/50">Your audit, interview, and this page are already attached. He'll have read them before you talk.</p>
+  </div>
+</section>
+
+<footer class="pt-10 text-sm text-mute">Built from your own chats and your own answers. {{FOOTER_NOTE}}</footer>
+
+</main>
+
+<script>
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('pending');io.unobserve(e.target);}}),{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+const bo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.style.width=e.target.dataset.w+'%';bo.unobserve(e.target);}}),{threshold:.3});
+document.querySelectorAll('.fill[data-w]').forEach(f=>{f.style.width='0%';bo.observe(f);});
+</script>
+</body>
+</html>
+<!--
+AGENT_CARDS, one per agent, ranked by hours back (highest first). effort is one of: tonight | afternoon | hookup.
+
+  <details class="bg-card rounded-2xl shadow-sm" {{open on the top card only}}>
+    <summary class="p-6 sm:p-7">
+      <div class="flex items-start gap-4">
+        <span class="rank font-display font-extrabold text-3xl text-line leading-none w-10 shrink-0">{{rank}}</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-xl leading-tight">{{name}}</h3>
+              <p class="text-mute mt-1">{{one line: what it does, in their words}}</p>
+            </div>
+            <svg class="chev w-5 h-5 text-mute shrink-0 mt-1" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg>
+          </div>
+          <div class="grid sm:grid-cols-[1fr_1fr_auto] gap-5 mt-6 items-end">
+            <div>
+              <div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">How sure</span><span class="text-sm font-semibold">{{High|Medium|Low}}</span></div>
+              <div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-teal" data-w="{{confidence 0-100}}"></div></div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between mb-1.5"><span class="text-xs font-semibold tracking-wider uppercase text-mute">Hours back / week</span><span class="text-sm font-semibold rank">{{e.g. 3–5}}{{ " (est.)" if estimated }}</span></div>
+              <div class="h-2 rounded-full bg-line overflow-hidden"><div class="fill h-full rounded-full bg-amber" data-w="{{hours as % of the top card's hours}}"></div></div>
+            </div>
+            <span class="justify-self-start sm:justify-self-end text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full
+              {{ tonight:  bg-teal-soft text-teal }}
+              {{ afternoon: bg-amber-soft text-amber-ink }}
+              {{ hookup:   bg-ink text-white }}">{{Tonight | An afternoon | Hook up your tools}}</span>
+          </div>
+        </div>
+      </div>
+    </summary>
+    <div class="px-6 sm:px-7 pb-7 pl-[4.5rem] sm:pl-[5rem] flex flex-col gap-5">
+      <div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">Why we think it fits</p><p class="text-mute leading-relaxed">{{evidence: cite the chat count, the interview quote, the number they gave}}</p></div>
+      <div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it looks like running</p><p class="leading-relaxed">{{two sentences, a scene, their business}}</p></div>
+      <div><p class="text-xs font-semibold tracking-widest uppercase text-teal mb-1">What it takes</p><ul class="list-disc pl-5 text-mute leading-relaxed flex flex-col gap-1">{{2-4 <li> bullets: each one thing that has to happen or get hooked up. Last bullet says who does it: you tonight / with help / Joey on the call}}</ul></div>
+    </div>
+  </details>
+
+TOP_THREE: <li class="flex gap-3"><span class="text-amber font-display font-bold">1</span><span>{{name}}. {{one line why}}</span></li>
+
+BOOKING_URL: Joey's Calendly link. Leave as-is if not given.
+-->

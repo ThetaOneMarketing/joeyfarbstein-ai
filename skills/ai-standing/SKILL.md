@@ -49,12 +49,41 @@ Before writing anything, make notes on these. Every one needs real evidence: a q
 
 **Where it let them down** (3). Patterns, not one-offs. Each with two real examples and a fix in one sentence.
 
-**Three quick wins** — the most important thing you'll write. Rules:
-- Each one must be doable **tonight, in ten minutes, for free, in the AI they already use.** No new tools. No signups. No "connect your calendar."
-- Each one comes from something you actually saw in their chats.
-- Each one is **handed to them ready to use** — a paste-in block, a saved prompt, a short template with their details already filled in from what you read.
-- The most common one is a "who I am" starter they paste at the top of a chat so AI stops forgetting them. Build it from their real details: trade, area, services, how they talk to customers. Only use details they stated in the chats.
-- Other strong ones: a cleaned-up version of the text or email they keep rewriting; a quote template built from the quotes they've written; a "before I start" checklist for a job type they keep asking about.
+**Three quick wins** — the most important thing you'll write. The bar is Claude Code's own insights report: every suggestion there is something you set up ONCE and it runs forever, and the AI does the install. Match that.
+
+The rule: **set once, works every time after.** Never "paste this at the top of every chat." Never a routine they have to remember. If they'd have to do it again tomorrow, it's not a quick win, it's a chore.
+
+Each one must:
+- Come from something you actually saw in their chats (cite it).
+- Be free, take about ten minutes, and need no new accounts.
+- End with an install block they copy once. For Claude Code users the block is a command or a file the AI writes for them ("Paste this into Claude Code and it sets it up"). For app users it's a one-time settings paste with the exact clicks.
+- Say in one line what changes after: "From now on, every chat already knows you're a roofer in Spokane."
+
+Pick from this menu by what app they use (`detected_source` in summary.json):
+
+*Claude Code users*
+- **A CLAUDE.md block.** Standing rules in their project. The "who I am" details, how they talk to customers, what never to do. Give the block; the AI adds it. ("Just copy this into Claude Code to add it to your CLAUDE.md.")
+- **A custom skill.** A `/command` for the thing they do over and over (quotes, follow-up texts, a daily check). Give the full `mkdir -p .claude/skills/<name> && cat > .claude/skills/<name>/SKILL.md <<'EOF' ... EOF` block with the skill written out, their details already in it.
+- **A hook.** For a rule they keep stating ("never send a customer anything without asking me"). Give the `settings.json` hooks block.
+- **A scheduled task or headless run.** For the thing they ask about every morning. Give the `claude -p "..."` line or the scheduled-task setup.
+- **Memory.** If they keep re-explaining a fact, tell the AI to remember it: give the exact line to say.
+
+*claude.ai app users*
+- **A Project with instructions.** The "who I am" block goes in Project instructions once. Give the block and the clicks: New project → name it → Project instructions → paste. From then on every chat in that project knows them.
+- **Memory.** "Say this once in any chat and it sticks: remember that I ..."
+- **A Style** for how they want texts and emails to sound, if that's a pattern.
+
+*ChatGPT users*
+- **Custom instructions.** Settings → Personalization → Custom instructions → paste. Give both boxes filled in (about you, how to respond).
+- **A Project** for the repeated task, with instructions and their template pinned in it.
+- **Memory.** "Say this once: remember that I ..."
+
+*Any phone*
+- **Text replacement** for the message they rewrite every time (Settings → General → Keyboard → Text Replacement on iPhone). Type a short code, the whole text appears. Give the text and the code.
+
+The "who I am" block is almost always win number one, but it goes into instructions or CLAUDE.md, never into a chat. Build it from their real details only: trade, area, services, crew, how they talk. Nothing they didn't state.
+
+Format each win like the insights report does it: title, *why for you* (the evidence), one line on what changes, then the block in a copy box with a one-line instruction above it ("Paste this into Claude Code and it adds it" / "Settings → Personalization → paste this").
 
 **One glimpse.** One scene, two or three sentences, of what it looks like when AI is hooked up and running on its own — built from THEIR data. "Picture the follow-up text you rewrote 23 times just going out on its own the morning after every job." Then stop. One scene. Not a list. Not a pitch.
 
